@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "xyz.lumian.constructeer.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"AbstractContainerMenuAccessor",
+		"LocalPlayerMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

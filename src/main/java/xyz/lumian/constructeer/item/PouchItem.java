@@ -1,0 +1,170 @@
+package xyz.lumian.constructeer.item;
+
+import net.minecraft.core.HolderSet;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.SlotAccess;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickAction;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import xyz.lumian.constructeer.item.component.ModComponents;
+import xyz.lumian.constructeer.item.component.PouchContent;
+import xyz.lumian.constructeer.tag.ModItemTags;
+
+import java.util.concurrent.atomic.AtomicReference;
+
+
+
+//**********************************************************************************************************************
+public class PouchItem
+    extends Item
+{
+    //******************************************************************************************************************
+    static final AtomicReference<HolderSet<Item>> VALID_TOOLS = new AtomicReference<>(HolderSet.empty());
+    
+    //******************************************************************************************************************
+    public static boolean isValidToolItem(final ItemStack stack)
+    {
+        return stack.is(PouchItem.VALID_TOOLS.get());
+    }
+    
+    //==================================================================================================================
+    @SuppressWarnings("resource")
+    public static void playInsertSound(final Player player)
+    {
+		player.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, (0.8F + player.level().getRandom().nextFloat() * 0.4F));
+	}
+
+	public static void playInsertFailSound(final Player player)
+    {
+		player.playSound(SoundEvents.BUNDLE_INSERT_FAIL, 1.0F, 1.0F);
+	}
+    
+    @SuppressWarnings("resource")
+    public static void playRemoveSound(final Player player)
+    {
+		player.playSound(SoundEvents.BUNDLE_REMOVE_ONE, 0.8F, (0.8F + player.level().getRandom().nextFloat() * 0.4F));
+	}
+    
+    //==================================================================================================================
+    private static void playerInventoryChanged(final Player player)
+    {
+        player.containerMenu.slotsChanged(player.getInventory());
+	}
+    
+    //******************************************************************************************************************
+    public PouchItem(final Properties properties) { super(properties); }
+    
+    //==================================================================================================================
+    @Override
+	public boolean overrideStackedOnOther(final ItemStack me, final Slot slot, final ClickAction action,
+                                          final Player player)
+    {
+        final ItemStack current = me.getOrDefault(ModComponents.POUCH_CONTENT, PouchContent.EMPTY).content();
+        final ItemStack other   = slot.getItem();
+     
+        if (other.is(ModItemTags.POUCHES))
+        {
+            return false;
+        }
+        
+        if (action == ClickAction.PRIMARY && !other.isEmpty())
+        {
+            if (
+                PouchItem.isValidToolItem(other)
+                && slot.allowModification(player)
+                && (current.isEmpty() || other.getCount() < 2)
+            )
+            {
+                final ItemStack next = slot.safeTake(1, 1, player);
+                me.set(ModComponents.POUCH_CONTENT, new PouchContent(next));
+                
+                if (!current.isEmpty())
+                {
+                    slot.safeInsert(current);
+                }
+                
+                PouchItem.playerInventoryChanged(player);
+                PouchItem.playInsertSound(player);
+            }
+            else
+            {
+                PouchItem.playInsertFailSound(player);
+            }
+            
+            return true;
+        }
+        else if (action == ClickAction.SECONDARY && other.isEmpty())
+        {
+            if (!current.isEmpty() && slot.allowModification(player))
+            {
+                slot.safeInsert(current);
+                
+                me.remove(ModComponents.POUCH_CONTENT);
+                PouchItem.playerInventoryChanged(player);
+                
+                PouchItem.playRemoveSound(player);
+            }
+            
+            return true;
+        }
+        
+        return false;
+	}
+    
+    @Override
+	public boolean overrideOtherStackedOnMe(final ItemStack me, final ItemStack other, final Slot slot,
+                                            final ClickAction action, final Player player, final SlotAccess slotAccess)
+    {
+        if (other.is(ModItemTags.POUCHES))
+        {
+            return false;
+        }
+        
+        final ItemStack current = me.getOrDefault(ModComponents.POUCH_CONTENT, PouchContent.EMPTY).content();
+        
+        if (action == ClickAction.PRIMARY && !other.isEmpty())
+        {
+            if (
+                PouchItem.isValidToolItem(other)
+                && slot.allowModification(player)
+                && (current.isEmpty() || other.getCount() < 2)
+            )
+            {
+                final ItemStack next = other.split(1);
+                me.set(ModComponents.POUCH_CONTENT, new PouchContent(next));
+                
+                if (!current.isEmpty())
+                {
+                    slotAccess.set(current);
+                }
+                
+                PouchItem.playerInventoryChanged(player);
+                PouchItem.playInsertSound(player);
+            }
+            else
+            {
+                PouchItem.playInsertFailSound(player);
+            }
+            
+            return true;
+        }
+        else if (action == ClickAction.SECONDARY && other.isEmpty())
+        {
+            if (slot.allowModification(player) && !current.isEmpty())
+            {
+                slotAccess.set(current);
+                
+                me.remove(ModComponents.POUCH_CONTENT);
+                PouchItem.playerInventoryChanged(player);
+                
+                PouchItem.playRemoveSound(player);
+            }
+            
+            return true;
+        }
+        
+        return false;
+	}
+}
