@@ -121,7 +121,6 @@ public class ToolbeltStorage
     
     //******************************************************************************************************************
     private final ItemStack[] pouches = new ItemStack[ToolbeltItem.COUNT_POUCHES];
-    private final int         hashCode;
     
     //******************************************************************************************************************
     /// Verifies that the given [ItemStack] is a valid [ModItems#POUCH] and converts it to fit into the toolbelt
@@ -159,18 +158,6 @@ public class ToolbeltStorage
         {
             Arrays.fill(this.pouches, maxlen, this.pouches.length, ItemStack.EMPTY);
         }
-        
-        {
-            final int empty_hash = ItemStack.hashItemAndComponents(ItemStack.EMPTY);
-            int       i          = 0;
-            
-            for (final var pouch : this.pouches)
-            {
-                i = (i * 31 + (!pouch.isEmpty() ? ItemStack.hashItemAndComponents(pouch) : empty_hash));
-            }
-            
-            this.hashCode = i;
-        }
     }
     
     //==================================================================================================================
@@ -189,6 +176,9 @@ public class ToolbeltStorage
         return (!pouch.isEmpty() ? Optional.of(pouch) : Optional.empty());
     }
     
+    /// Gets the pouch with the given ID unchecked.
+    /// @param id The id of the pouch
+    /// @return The [ItemStack] at the given ID, or throws an exception if out of bounds
     public ItemStack getPouchUnsafe(final int id) { return this.pouches[id]; }
     
     /// A [Stream] with every slot of this storage being represented by an [Entry]. Other than [#stream()], empty slots
@@ -196,7 +186,8 @@ public class ToolbeltStorage
     /// @return The [Stream].
     public Stream<Entry> streamIntrusive()
     {
-        return IntStream.range(0, this.pouches.length)
+        return IntStream
+            .range(0, this.pouches.length)
             .mapToObj(i -> new Entry(i, this.pouches[i]));
     }
     
@@ -205,7 +196,8 @@ public class ToolbeltStorage
     /// @return The [Stream].
     public Stream<Entry> stream()
     {
-        return IntStream.range(0, this.pouches.length)
+        return IntStream
+            .range(0, this.pouches.length)
             .filter(i -> !this.pouches[i].isEmpty())
             .mapToObj(i -> new Entry(i, this.pouches[i]));
     }
@@ -235,6 +227,9 @@ public class ToolbeltStorage
     }
     
     //==================================================================================================================
+    /// Determines whether this storage instance has an [ItemStack] which does not satisfy [ItemStack#isEmpty()].
+    /// @param id The id of the pouch
+    /// @return `true` if the pouch is non-empty
     public boolean hasPouch(final int id)
     {
         if (id < 0 || id >= this.pouches.length)
@@ -342,5 +337,6 @@ public class ToolbeltStorage
         return true;
     }
 
-    public int hashCode() { return this.hashCode; }
+    @SuppressWarnings("deprecation")
+    public int hashCode() { return ItemStack.hashStackList(Arrays.asList(this.pouches)); }
 }
