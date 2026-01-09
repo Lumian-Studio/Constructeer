@@ -1,6 +1,5 @@
 package xyz.lumian.constructeer.integration;
 
-import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.ModDefine;
