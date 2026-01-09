@@ -59,7 +59,7 @@ public enum ModLang
         (() -> "Pouch GUI render mode")),
     CONFIG_SCREEN_OPTION_RENDER_TOOLBELT_MODEL(
         "config.screen.%s.option.renderToolbeltModel",
-        (() -> "Render toolbelt model")),
+        (() -> "Toolbelt model render mode")),
     CONFIG_SCREEN_OPTION_ALLOWED_POUCH_TOOLS(
         "config.screen.%s.option.allowedPouchTools",
         (() -> "Allowed pouch tools")),

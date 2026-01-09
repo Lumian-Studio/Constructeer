@@ -1,5 +1,6 @@
 package xyz.lumian.constructeer.integration;
 
+import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.ModDefine;
@@ -21,7 +22,7 @@ public final class Compat
     {
         // trinkets integration
         TRINKETS = Compat
-            .loadIntegrationClass("trinkets", "Trinkets", ITrinkets.class)
+            .loadIntegrationClass("trinkets", "Trinkets", ITrinkets.class, Compat.class)
             .orElse(null);
     }
     
@@ -31,9 +32,10 @@ public final class Compat
     
     //==================================================================================================================
     @SuppressWarnings("unchecked")
-    private static <T> Optional<T> loadIntegrationClass(final String   requiredModId,
-                                                        final String   className,
-                                                        final Class<T> integrationClass)
+    public static <T> Optional<T> loadIntegrationClass(final String   requiredModId,
+                                                       final String   className,
+                                                       final Class<T> integrationClass,
+                                                       final Class<?> lookup)
     {
         if (!FabricLoader.getInstance().isModLoaded(requiredModId))
         {
@@ -43,9 +45,8 @@ public final class Compat
         
         try
         {
-            final Class<Compat> clazz       = Compat.class;
-            final ClassLoader   loader      = clazz.getClassLoader();
-            final Class<?>      integration = Class.forName((clazz.getPackageName() + "." + className), true, loader);
+            final ClassLoader   loader      = lookup.getClassLoader();
+            final Class<?>      integration = Class.forName((lookup.getPackageName() + "." + className), true, loader);
             
             if (!integrationClass.isAssignableFrom(integration))
             {

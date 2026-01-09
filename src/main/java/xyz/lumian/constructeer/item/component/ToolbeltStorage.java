@@ -189,6 +189,8 @@ public class ToolbeltStorage
         return (!pouch.isEmpty() ? Optional.of(pouch) : Optional.empty());
     }
     
+    public ItemStack getPouchUnsafe(final int id) { return this.pouches[id]; }
+    
     /// A [Stream] with every slot of this storage being represented by an [Entry]. Other than [#stream()], empty slots
     /// will not be omitted but instead represented by setting an entry's [Entry#pouch()] to [ItemStack#EMPTY].
     /// @return The [Stream].
@@ -216,7 +218,6 @@ public class ToolbeltStorage
     /// @return The list of pouch [ItemStack] objects.
     public List<ItemStack> asItems() { return ImmutableList.copyOf(this.pouches); }
     
-    //==================================================================================================================
     /// {@return the number of upgrades in this storage instance}
     public int numUpgrades()
     {
@@ -231,6 +232,17 @@ public class ToolbeltStorage
         }
         
         return c;
+    }
+    
+    //==================================================================================================================
+    public boolean hasPouch(final int id)
+    {
+        if (id < 0 || id >= this.pouches.length)
+        {
+            return false;
+        }
+        
+        return !this.pouches[id].isEmpty();
     }
     
     /// {@return whether this storage instance has at least one upgrade}

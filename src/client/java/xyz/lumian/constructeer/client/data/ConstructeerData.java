@@ -19,8 +19,10 @@ public class ConstructeerData
 
         pack.addProvider(ModModelProvider::new);
         pack.addProvider(ModRecipeProvider::new);
+        pack.addProvider(ModEquipmentAssetProvider::new);
         
         // Langs
         pack.addProvider(ModEnUsProvider::new);
+        
 	}
 }

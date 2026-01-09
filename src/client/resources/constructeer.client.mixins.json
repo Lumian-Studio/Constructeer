@@ -4,7 +4,10 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"AbstractContainerMenuAccessor",
-		"LocalPlayerMixin"
+		"LocalPlayerMixin",
+		"AvatarRendererMixin",
+		"HumanoidMobRendererMixin",
+		"HumanoidRenderStateMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

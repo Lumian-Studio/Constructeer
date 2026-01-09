@@ -13,7 +13,8 @@ import java.util.Optional;
 
 //**********************************************************************************************************************
 public final class Trinkets
-    implements ITrinkets
+    implements
+        ITrinkets
 {
     //******************************************************************************************************************
     private static Optional<Container> resolve(final TrinketComponent component, final String group, final String id)

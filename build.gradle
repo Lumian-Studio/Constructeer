@@ -5,7 +5,7 @@ plugins {
 }
 
 version = project.mod_version
-group = project.maven_group
+group = project.mod_package
 
 base {
 	archivesName = project.archives_base_name
@@ -129,7 +129,7 @@ jar {
 
 buildConfig {
     className   "ModAutoDefine"
-    packageName project.maven_group
+    packageName project.mod_package
 
     useJavaOutput()
 
@@ -137,6 +137,7 @@ buildConfig {
     buildConfigField String.class, 'NAME',       project.mod_name
     buildConfigField String.class, 'VERSION',    project.mod_version
     buildConfigField String.class, 'MC_VERSION', project.minecraft_version
+	buildConfigField String.class, 'PACKAGE',    project.mod_package
 }
 
 // configure the maven publication

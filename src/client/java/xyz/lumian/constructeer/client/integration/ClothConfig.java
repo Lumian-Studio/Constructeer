@@ -108,7 +108,10 @@ public class ClothConfig
                 .addEntry(ClothConfig.createConfigEntry(
                     ModClientConfig.SPEC,
                     ModClientConfig.INSTANCE.renderToolbeltModel(),
-                    ConfigEntryBuilder::startBooleanToggle,
+                    ((builder1, title, val) -> builder1.startEnumSelector(
+                        title,
+                        ModClientConfig.ToolbeltRenderMode.class,
+                        val)),
                     ModLang.CONFIG_SCREEN_OPTION_RENDER_TOOLBELT_MODEL,
                     ModLang.CONFIG_SCREEN_OPTION_RENDER_TOOLBELT_MODEL_TOOLTIP));
             

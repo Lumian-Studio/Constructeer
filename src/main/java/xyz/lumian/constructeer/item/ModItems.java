@@ -79,7 +79,7 @@ public final class ModItems
             .component(DataComponents.EQUIPPABLE, Equippable
                 .builder(EquipmentSlot.LEGS)
                 .setEquipSound(ArmorMaterials.LEATHER.equipSound())
-                .setAsset(EquipmentAssets.LEATHER)
+                .setAsset(ModEquipmentAssets.TOOLBELT)
                 .setEquipOnInteract(false)
                 .build())
             .component(ModComponents.TOOLBELT_STORAGE,  ToolbeltStorage .EMPTY)
