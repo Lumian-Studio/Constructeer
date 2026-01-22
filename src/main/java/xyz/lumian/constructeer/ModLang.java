@@ -60,6 +60,18 @@ public enum ModLang
     CONFIG_SCREEN_OPTION_RENDER_TOOLBELT_MODEL(
         "config.screen.%s.option.renderToolbeltModel",
         (() -> "Toolbelt model render mode")),
+    CONFIG_SCREEN_OPTION_HAMMER_SHOULD_RENDER(
+        "config.screen.%s.option.shouldRenderHammerOutline",
+        (() -> "Render hammer tool outline")),
+    CONFIG_SCREEN_OPTION_HAMMER_OUTLINE_COLOUR(
+        "config.screen.%s.option.hammerOutlineColour",
+        (() -> "Hammer outline colour")),
+    CONFIG_SCREEN_OPTION_PLOW_SHOULD_RENDER(
+        "config.screen.%s.option.shouldRenderPlowOutline",
+        (() -> "Render plow tool outline")),
+    CONFIG_SCREEN_OPTION_PLOW_OUTLINE_COLOUR(
+        "config.screen.%s.option.plowOutlineColour",
+        (() -> "Plow outline colour")),
     CONFIG_SCREEN_OPTION_ALLOWED_POUCH_TOOLS(
         "config.screen.%s.option.allowedPouchTools",
         (() -> "Allowed pouch tools")),
@@ -67,6 +79,10 @@ public enum ModLang
     CONFIG_SCREEN_OPTION_POUCH_CONTENT_RENDER_MODE_TOOLTIP("config.screen.%s.option.pouchContentRenderMode.tooltip"),
     CONFIG_SCREEN_OPTION_RENDER_TOOLBELT_MODEL_TOOLTIP    ("config.screen.%s.option.renderToolbeltModel.tooltip"),
     CONFIG_SCREEN_OPTION_ALLOWED_POUCH_TOOLS_TOOLTIP      ("config.screen.%s.option.allowedPouchTools.tooltip"),
+    CONFIG_SCREEN_OPTION_HAMMER_SHOULD_RENDER_TOOLTIP     ("config.screen.%s.option.shouldRenderHammerOutline.tooltip"),
+    CONFIG_SCREEN_OPTION_HAMMER_OUTLINE_COLOUR_TOOLTIP    ("config.screen.%s.option.hammerOutlineColour.tooltip"),
+    CONFIG_SCREEN_OPTION_PLOW_SHOULD_RENDER_TOOLTIP       ("config.screen.%s.option.shouldRenderPlowOutline.tooltip"),
+    CONFIG_SCREEN_OPTION_PLOW_OUTLINE_COLOUR_TOOLTIP      ("config.screen.%s.option.plowOutlineColour.tooltip"),
     
     TOOLBELT_WHEEL_SCREEN_EMPTY_POUCH(
         "screen.%s.toolbelt.wheel.empty_pouch",

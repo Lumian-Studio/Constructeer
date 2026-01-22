@@ -1,19 +1,13 @@
 package xyz.lumian.constructeer.client.renderer.item;
 
 import com.mojang.serialization.MapCodec;
-import net.fabricmc.fabric.impl.datagen.client.FabricModelProviderDefinitions;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.item.*;
 import net.minecraft.client.resources.model.ResolvableModel;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.jspecify.annotations.Nullable;
-import xyz.lumian.constructeer.ModDefine;
 import xyz.lumian.constructeer.item.component.ModComponents;
 import xyz.lumian.constructeer.item.component.PouchContent;
 

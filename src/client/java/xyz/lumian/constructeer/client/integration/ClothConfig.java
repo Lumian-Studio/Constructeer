@@ -6,7 +6,6 @@ import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
-import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.impl.builders.AbstractFieldBuilder;
 import net.minecraft.client.Minecraft;
@@ -99,34 +98,41 @@ public class ClothConfig
                 .addEntry(ClothConfig.createConfigEntry(
                     ModClientConfig.SPEC,
                     ModClientConfig.INSTANCE.pouchContentRenderMode(),
-                    ((builder1, title, val) -> builder1.startEnumSelector(
-                        title,
-                        ModClientConfig.PouchContentRenderMode.class,
-                        val)),
+                    ((builder1, title, val) ->
+                         builder1.startEnumSelector(title, ModClientConfig.PouchContentRenderMode.class, val)),
                     ModLang.CONFIG_SCREEN_OPTION_POUCH_CONTENT_RENDER_MODE,
                     ModLang.CONFIG_SCREEN_OPTION_POUCH_CONTENT_RENDER_MODE_TOOLTIP))
                 .addEntry(ClothConfig.createConfigEntry(
                     ModClientConfig.SPEC,
                     ModClientConfig.INSTANCE.renderToolbeltModel(),
-                    ((builder1, title, val) -> builder1.startEnumSelector(
-                        title,
-                        ModClientConfig.ToolbeltRenderMode.class,
-                        val)),
+                    ((builder1, title, val) ->
+                         builder1.startEnumSelector(title, ModClientConfig.ToolbeltRenderMode.class, val)),
                     ModLang.CONFIG_SCREEN_OPTION_RENDER_TOOLBELT_MODEL,
-                    ModLang.CONFIG_SCREEN_OPTION_RENDER_TOOLBELT_MODEL_TOOLTIP));
-            
-            final ConfigCategory behaviour_builder = builder
-                .getOrCreateCategory(ModLang.CONFIG_SCREEN_CATEGORY_BEHAVIOUR);
-            
-            if (mc.getSingleplayerServer() != null)
-            {
-                behaviour_builder.addEntry(ClothConfig.createConfigEntry(
-                    ModServerConfig.SPEC,
-                    ModServerConfig.INSTANCE.pouchAllowedTools(),
-                    ConfigEntryBuilder::startStrList,
-                    ModLang.CONFIG_SCREEN_OPTION_ALLOWED_POUCH_TOOLS,
-                    ModLang.CONFIG_SCREEN_OPTION_ALLOWED_POUCH_TOOLS_TOOLTIP));
-            }
+                    ModLang.CONFIG_SCREEN_OPTION_RENDER_TOOLBELT_MODEL_TOOLTIP))
+                .addEntry(ClothConfig.createConfigEntry(
+                    ModClientConfig.SPEC,
+                    ModClientConfig.INSTANCE.shouldRenderHammerOutline(),
+                    ConfigEntryBuilder::startBooleanToggle,
+                    ModLang.CONFIG_SCREEN_OPTION_HAMMER_SHOULD_RENDER,
+                    ModLang.CONFIG_SCREEN_OPTION_HAMMER_SHOULD_RENDER_TOOLTIP))
+                .addEntry(ClothConfig.createConfigEntry(
+                    ModClientConfig.SPEC,
+                    ModClientConfig.INSTANCE.shouldRenderPlowOutline(),
+                    ConfigEntryBuilder::startBooleanToggle,
+                    ModLang.CONFIG_SCREEN_OPTION_PLOW_SHOULD_RENDER,
+                    ModLang.CONFIG_SCREEN_OPTION_PLOW_SHOULD_RENDER_TOOLTIP))
+                .addEntry(ClothConfig.createConfigEntry(
+                    ModClientConfig.SPEC,
+                    ModClientConfig.INSTANCE.hammerOutlineColour(),
+                    ((builder1, title, val) -> builder1.startColorField(title, (val & 0xFFFFFF))),
+                    ModLang.CONFIG_SCREEN_OPTION_HAMMER_OUTLINE_COLOUR,
+                    ModLang.CONFIG_SCREEN_OPTION_HAMMER_OUTLINE_COLOUR_TOOLTIP))
+                .addEntry(ClothConfig.createConfigEntry(
+                    ModClientConfig.SPEC,
+                    ModClientConfig.INSTANCE.plowOutlineColour(),
+                    ((builder1, title, val) -> builder1.startColorField(title, (val & 0xFFFFFF))),
+                    ModLang.CONFIG_SCREEN_OPTION_PLOW_OUTLINE_COLOUR,
+                    ModLang.CONFIG_SCREEN_OPTION_PLOW_OUTLINE_COLOUR_TOOLTIP));
             
             return builder.build();
         });

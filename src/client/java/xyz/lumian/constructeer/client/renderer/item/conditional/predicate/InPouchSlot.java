@@ -3,9 +3,7 @@ package xyz.lumian.constructeer.client.renderer.item.conditional.predicate;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
-import xyz.lumian.constructeer.client.ConstructeerClient;
 import xyz.lumian.constructeer.client.config.ModClientConfig;
-import xyz.lumian.constructeer.container.ToolbeltMenu;
 
 
 
@@ -27,7 +25,6 @@ public class InPouchSlot
     @Override
     public boolean test(final AbstractContainerMenu menu, final Slot slot)
     {
-        final ModClientConfig.PouchContentRenderMode mode = ModClientConfig.INSTANCE.pouchContentRenderMode().get();
-        return mode.test(() -> slot instanceof ToolbeltMenu.PouchSlot);
+        return ModClientConfig.INSTANCE.pouchContentRenderMode().get().test(slot);
     }
 }

@@ -34,6 +34,20 @@ public abstract class ModTagProvider
             this.valueLookupBuilder(ModItemTags.POUCHES)
                 .add(ModItems.POUCH)
                 .addAll(ModItems.POUCH_BY_DYE.values());
+            
+            this.valueLookupBuilder(ModItemTags.HAMMERS).addAll(ModItems.HAMMER_BY_MATERIAL.values());
+            this.valueLookupBuilder(ModItemTags.PLOWS)  .addAll(ModItems.PLOW_BY_MATERIAL  .values());
+            this.valueLookupBuilder(ModItemTags.SAWS)   .addAll(ModItems.SAW_BY_MATERIAL   .values());
+            
+            this.valueLookupBuilder(ModItemTags.MULTI_MINING_TOOLS)
+                .addTag(ModItemTags.HAMMERS)
+                .addTag(ModItemTags.PLOWS);
+            
+            this.valueLookupBuilder(ModItemTags.COMMON_TOOLS)
+                .setReplace(false)
+                .addTag(ModItemTags.HAMMERS)
+                .addTag(ModItemTags.PLOWS)
+                .addTag(ModItemTags.SAWS);
         }
     }
 }

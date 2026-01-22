@@ -6,9 +6,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.neoforged.fml.config.ModConfig;
+import xyz.lumian.constructeer.ConstructeerMain;
 import xyz.lumian.constructeer.ModDefine;
 import xyz.lumian.constructeer.client.config.ModClientConfig;
-import xyz.lumian.constructeer.item.ItemAttorney;
 
 
 
@@ -25,7 +25,7 @@ public class ConstructeerClient
         
         // Reload whatever can be reloaded once any of our configs reloaded
         ModConfigEvents.reloading(ModDefine.MOD_ID).register(this::reloadConfig);
-        ClientPlayConnectionEvents.JOIN.register(((handler, sender, client) -> this.reloadValidTools(client)));
+        ClientPlayConnectionEvents.JOIN.register(((handler, sender, client) -> ConstructeerMain.reloadServerConfig()));
 	}
     
     //==================================================================================================================
@@ -42,7 +42,7 @@ public class ConstructeerClient
         // we are on the physical client and on a dedicated server
         if (mc.level != null && mc.getSingleplayerServer() == null)
         {
-            ItemAttorney.updateValidTools(mc.level.registryAccess());
+            ConstructeerMain.reloadServerConfig();
         }
     }
 }

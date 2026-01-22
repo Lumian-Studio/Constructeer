@@ -7,7 +7,7 @@ import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStack;
-import xyz.lumian.constructeer.client.impl.IHumanoidRenderStateExtension;
+import xyz.lumian.constructeer.client.renderer.state.ModRenderDataKeys;
 import xyz.lumian.constructeer.item.ModItems;
 import xyz.lumian.constructeer.item.ToolbeltItem;
 import xyz.lumian.constructeer.item.component.ModComponents;
@@ -125,9 +125,6 @@ public class ToolbeltModel
         this.toolbelt.xScale = 1.0f;
         this.toolbelt.zScale = 1.0f;
         
-        final IHumanoidRenderStateExtension extension = ((IHumanoidRenderStateExtension) state);
-        
-        final ItemStack stack = extension.constructeer$getToolbeltEquipment();
         int   state_mask = 0;
         
         if (state.legsEquipment.is(ItemTags.LEG_ARMOR))
@@ -135,6 +132,8 @@ public class ToolbeltModel
             this.toolbelt.xScale = 1.05f;
             this.toolbelt.zScale = 1.1f;
         }
+        
+        final ItemStack stack = state.getDataOrDefault(ModRenderDataKeys.HUMANOID_TOOLBELT_EQUIPMENT, ItemStack.EMPTY);
         
         if (stack.is(ModItems.TOOLBELT))
         {
@@ -172,7 +171,7 @@ public class ToolbeltModel
             
             if (visible && (((state_mask >> 8) & bit) != bit))
             {
-                final double fall_distance = extension.constructeer$getFallDistance();
+                final double fall_distance = state.getDataOrDefault(ModRenderDataKeys.LIVING_FALL_DISTANCE, 0.0);
                 
                 if (fall_distance <= 0.01f)
                 {

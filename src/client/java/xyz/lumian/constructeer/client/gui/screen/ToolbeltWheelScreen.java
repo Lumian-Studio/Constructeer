@@ -19,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec2;
 import org.joml.Matrix3x2f;
 import org.joml.Matrix3x2fStack;
 import org.joml.Vector2i;
@@ -135,7 +136,6 @@ public class ToolbeltWheelScreen
         final double y_diff = (relMouseY - ToolbeltWheelScreen.WHEEL_RADIUS);
         final double sqrd_x = (x_diff * x_diff);
         final double sqrd_y = (y_diff * y_diff);
-        
         return ((sqrd_x + sqrd_y) > ToolbeltWheelScreen.WHEEL_RADIUS_SQUARED);
     }
     

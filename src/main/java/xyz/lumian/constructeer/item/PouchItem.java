@@ -1,6 +1,9 @@
 package xyz.lumian.constructeer.item;
 
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.player.Player;
@@ -8,11 +11,15 @@ import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import xyz.lumian.constructeer.ConstructeerMain;
+import xyz.lumian.constructeer.ModDefine;
 import xyz.lumian.constructeer.item.component.ModComponents;
 import xyz.lumian.constructeer.item.component.PouchContent;
+import xyz.lumian.constructeer.registry.RegistryId;
 import xyz.lumian.constructeer.tag.ModItemTags;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 
 
@@ -21,7 +28,34 @@ public class PouchItem
     extends Item
 {
     //******************************************************************************************************************
-    static final AtomicReference<HolderSet<Item>> VALID_TOOLS = new AtomicReference<>(HolderSet.empty());
+    private static final AtomicReference<HolderSet<Item>> VALID_TOOLS = new AtomicReference<>(HolderSet.empty());
+    
+    //==================================================================================================================
+    static
+    {
+        ConstructeerMain.addServerReloadListener(config -> PouchItem.VALID_TOOLS.set(HolderSet.direct(config
+            .pouchAllowedTools()
+            .get()
+            .stream()
+            .flatMap(str ->
+            {
+                final RegistryId<Item> id = RegistryId.parse(Registries.ITEM, str);
+                final Stream<Holder<Item>> holders = id
+                    .resolveOptional(BuiltInRegistries.ITEM)
+                    .map(HolderSet::stream)
+                    .orElse(null);
+                
+                if (holders == null)
+                {
+                    ModDefine.LOGGER.warn("unknown registry holder {}", id);
+                    return Stream.empty();
+                }
+                
+                return holders;
+            })
+           .distinct()
+           .toList())));
+    }
     
     //******************************************************************************************************************
     public static boolean isValidToolItem(final ItemStack stack)

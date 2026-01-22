@@ -14,8 +14,12 @@ import net.minecraft.data.recipes.*;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.item.recipe.ShapelessPouchRecipe;
 import xyz.lumian.constructeer.item.recipe.ToolbeltWithPouchRecipe;
@@ -70,6 +74,118 @@ public class ModRecipeProvider
                 Arrays.stream(DyeColor.values()).forEach(dye -> this.addPouchRecipe(
                     ModItems.POUCH_BY_DYE.get(dye),
                     BundleItem.getByColor(dye), dye));
+                
+                this.addHammerRecipe(ModItems.WOODEN_HAMMER,  ItemTags.LOGS, "has_logs");
+                this.addHammerRecipe(ModItems.STONE_HAMMER,   Blocks.SMOOTH_STONE);
+                this.addHammerRecipe(ModItems.COPPER_HAMMER,  ItemTags.COPPER, "has_copper");
+                this.addHammerRecipe(ModItems.IRON_HAMMER,    Blocks.IRON_BLOCK);
+                this.addHammerRecipe(ModItems.GOLDEN_HAMMER,  Blocks.GOLD_BLOCK);
+                this.addHammerRecipe(ModItems.DIAMOND_HAMMER, Blocks.DIAMOND_BLOCK);
+                this.multiToolSmithingRecipe(ModItems.DIAMOND_HAMMER, ModItems.NETHERITE_HAMMER);
+                
+                this.addPlowRecipe(ModItems.WOODEN_PLOW,  ItemTags.LOGS, "has_logs");
+                this.addPlowRecipe(ModItems.STONE_PLOW,   Blocks.SMOOTH_STONE);
+                this.addPlowRecipe(ModItems.COPPER_PLOW,  ItemTags.COPPER, "has_copper");
+                this.addPlowRecipe(ModItems.IRON_PLOW,    Blocks.IRON_BLOCK);
+                this.addPlowRecipe(ModItems.GOLDEN_PLOW,  Blocks.GOLD_BLOCK);
+                this.addPlowRecipe(ModItems.DIAMOND_PLOW, Blocks.DIAMOND_BLOCK);
+                this.multiToolSmithingRecipe(ModItems.DIAMOND_PLOW, ModItems.NETHERITE_PLOW);
+                
+                this.addSawRecipe(ModItems.WOODEN_SAW,  ItemTags.LOGS, "has_logs");
+                this.addSawRecipe(ModItems.STONE_SAW,   Blocks.SMOOTH_STONE);
+                this.addSawRecipe(ModItems.COPPER_SAW,  ItemTags.COPPER, "has_copper");
+                this.addSawRecipe(ModItems.IRON_SAW,    Blocks.IRON_BLOCK);
+                this.addSawRecipe(ModItems.GOLDEN_SAW,  Blocks.GOLD_BLOCK);
+                this.addSawRecipe(ModItems.DIAMOND_SAW, Blocks.DIAMOND_BLOCK);
+                this.multiToolSmithingRecipe(ModItems.DIAMOND_SAW, ModItems.NETHERITE_SAW);
+            }
+            
+            //==========================================================================================================
+            private void addHammerRecipe(final Item hammer, final ItemLike ingredient)
+            {
+                this.shaped(RecipeCategory.TOOLS, hammer)
+                    .pattern("###")
+                    .pattern(" * ")
+                    .pattern(" * ")
+                    .define('#', ingredient)
+                    .define('*', Items.STICK)
+                    .unlockedBy(RecipeProvider.getHasName(ingredient), this.has(ingredient))
+                    .save(this.output);
+            }
+            
+            private void addHammerRecipe(final Item hammer, final TagKey<Item> ingredient, final String hasName)
+            {
+                this.shaped(RecipeCategory.TOOLS, hammer)
+                    .pattern("###")
+                    .pattern(" * ")
+                    .pattern(" * ")
+                    .define('#', ingredient)
+                    .define('*', Items.STICK)
+                    .unlockedBy(hasName, this.has(ingredient))
+                    .save(this.output);
+            }
+            
+            private void multiToolSmithingRecipe(final Item multiToolInput, final Item multiToolOutput)
+            {
+                SmithingTransformRecipeBuilder
+                    .smithing(
+                        Ingredient.of(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE),
+                        Ingredient.of(multiToolInput),
+                        Ingredient.of(Items.NETHERITE_BLOCK),
+                        RecipeCategory.TOOLS,
+                        multiToolOutput)
+                    .unlocks(
+                        RecipeProvider.getHasName(Items.NETHERITE_BLOCK),
+                        this.has(ItemTags.NETHERITE_TOOL_MATERIALS))
+                    .save(this.output, (RecipeProvider.getItemName(multiToolOutput) + "_smithing"));
+            }
+            
+            private void addPlowRecipe(final Item hammer, final Block ingredient)
+            {
+                this.shaped(RecipeCategory.TOOLS, hammer)
+                    .pattern("#")
+                    .pattern("*")
+                    .pattern("*")
+                    .define('#', ingredient)
+                    .define('*', Items.STICK)
+                    .unlockedBy(RecipeProvider.getHasName(ingredient), this.has(ingredient))
+                    .save(this.output);
+            }
+            
+            private void addPlowRecipe(final Item hammer, final TagKey<Item> ingredient, final String hasName)
+            {
+                this.shaped(RecipeCategory.TOOLS, hammer)
+                    .pattern("#")
+                    .pattern("*")
+                    .pattern("*")
+                    .define('#', ingredient)
+                    .define('*', Items.STICK)
+                    .unlockedBy(hasName, this.has(ingredient))
+                    .save(this.output);
+            }
+            
+            private void addSawRecipe(final Item saw, final Block ingredient)
+            {
+                this.shaped(RecipeCategory.TOOLS, saw)
+                    .pattern(" # ")
+                    .pattern("#*#")
+                    .pattern(" * ")
+                    .define('#', ingredient)
+                    .define('*', Items.STICK)
+                    .unlockedBy(RecipeProvider.getHasName(ingredient), this.has(ingredient))
+                    .save(this.output);
+            }
+            
+            private void addSawRecipe(final Item saw, final TagKey<Item> ingredient, final String hasName)
+            {
+                this.shaped(RecipeCategory.TOOLS, saw)
+                    .pattern(" # ")
+                    .pattern("#*#")
+                    .pattern(" * ")
+                    .define('#', ingredient)
+                    .define('*', Items.STICK)
+                    .unlockedBy(hasName, this.has(ingredient))
+                    .save(this.output);
             }
             
             //==========================================================================================================

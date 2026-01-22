@@ -1,17 +1,13 @@
 package xyz.lumian.constructeer.client.data;
 
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricCodecDataProvider;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
-import net.minecraft.data.CachedOutput;
-import net.minecraft.data.DataProvider;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.item.equipment.EquipmentAsset;
-import xyz.lumian.constructeer.client.model.ModModelLayers;
+import net.minecraft.resources.Identifier;
 import xyz.lumian.constructeer.item.ModEquipmentAssets;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
@@ -20,45 +16,27 @@ import java.util.function.BiConsumer;
 
 //**********************************************************************************************************************
 public class ModEquipmentAssetProvider
-    implements DataProvider
+    extends FabricCodecDataProvider<EquipmentClientInfo>
 {
     //******************************************************************************************************************
-    private final PackOutput.PathProvider pathProvider;
-    
-    //******************************************************************************************************************
-    public ModEquipmentAssetProvider(final FabricDataOutput output)
+    public ModEquipmentAssetProvider(final FabricDataOutput output,
+                                     final CompletableFuture<HolderLookup.Provider> future)
     {
-        this.pathProvider = output.createPathProvider(PackOutput.Target.RESOURCE_PACK, "equipment");
+        super(output, future, PackOutput.Target.RESOURCE_PACK, "equipment", EquipmentClientInfo.CODEC);
     }
     
     //==================================================================================================================
     @Override public String getName() { return "Constructeer Equipment Asset Provider"; }
     
     //==================================================================================================================
-    public CompletableFuture<?> run(final CachedOutput output)
+    @Override
+    protected void configure(final BiConsumer<Identifier, EquipmentClientInfo> output,
+                             final HolderLookup.Provider                       lookup)
     {
-		final Map<ResourceKey<EquipmentAsset>, EquipmentClientInfo> map = new HashMap<>();
-		this.generate((resourceKey, equipmentClientInfo) ->
-        {
-			if (map.putIfAbsent(resourceKey, equipmentClientInfo) != null)
-            {
-				throw new IllegalStateException("Tried to register equipment asset twice for id: " + resourceKey);
-			}
-		});
-  
-		return DataProvider.saveAll(output, EquipmentClientInfo.CODEC, this.pathProvider::json, map);
-	}
-    
-    //==================================================================================================================
-    private void generate(final BiConsumer<ResourceKey<EquipmentAsset>, EquipmentClientInfo> output)
-    {
-        output.accept(
-            ModEquipmentAssets.TOOLBELT,
-            EquipmentClientInfo.builder()
-                .addLayers(
-                    EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS,
-                    new EquipmentClientInfo.Layer(ModEquipmentAssets.TOOLBELT.identifier(), Optional.empty(), false))
-                .build()
-        );
+        output.accept(ModEquipmentAssets.TOOLBELT.identifier(), EquipmentClientInfo.builder()
+            .addLayers(
+                EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS,
+                new EquipmentClientInfo.Layer(ModEquipmentAssets.TOOLBELT.identifier(), Optional.empty(), false))
+            .build());
     }
 }

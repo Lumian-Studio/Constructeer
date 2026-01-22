@@ -21,7 +21,7 @@ public final class ModComponents
     public static final Map<Identifier, DataComponentType<?>> BY_ID = new Object2ObjectArrayMap<>();
     
     //==================================================================================================================
-    public static final DataComponentType<ToolbeltStorage> TOOLBELT_STORAGE = ModComponents.register(
+    public static final DataComponentType<ToolbeltStorage> TOOLBELT_STORAGE = register(
         "toolbelt_storage",
         DataComponentType
             .<ToolbeltStorage>builder()
@@ -30,21 +30,21 @@ public final class ModComponents
             .cacheEncoding()
             .build());
     
-    public static final DataComponentType<ToolbeltSettings> TOOLBELT_SETTINGS = ModComponents.register(
-        "toolbelt_settings",
-        DataComponentType
-            .<ToolbeltSettings>builder()
-            .persistent(ToolbeltSettings.CODEC)
-            .networkSynchronized(ToolbeltSettings.STREAM_CODEC)
-            .ignoreSwapAnimation()
-            .build());
-    
-    public static final DataComponentType<PouchContent> POUCH_CONTENT = ModComponents.register(
+    public static final DataComponentType<PouchContent> POUCH_CONTENT = register(
         "content",
         DataComponentType
             .<PouchContent>builder()
             .persistent(PouchContent.CODEC)
             .networkSynchronized(PouchContent.STREAM_CODEC)
+            .cacheEncoding()
+            .build());
+    
+    public static final DataComponentType<MultiMining> MULTI_MINING = register(
+        "multi_mining",
+        DataComponentType
+            .<MultiMining>builder()
+            .persistent(MultiMining.CODEC)
+            .networkSynchronized(MultiMining.STREAM_CODEC)
             .cacheEncoding()
             .build());
     

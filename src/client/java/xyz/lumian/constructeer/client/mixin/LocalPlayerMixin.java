@@ -1,6 +1,5 @@
 package xyz.lumian.constructeer.client.mixin;
 
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;

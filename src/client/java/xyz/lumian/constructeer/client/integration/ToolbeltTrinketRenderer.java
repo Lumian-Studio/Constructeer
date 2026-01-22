@@ -14,8 +14,8 @@ import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
-import xyz.lumian.constructeer.client.impl.IHumanoidRenderStateExtension;
 import xyz.lumian.constructeer.client.renderer.layer.ToolbeltRenderLayer;
+import xyz.lumian.constructeer.client.renderer.state.ModRenderDataKeys;
 import xyz.lumian.constructeer.integration.impl.ITrinkets;
 import xyz.lumian.constructeer.item.ModItems;
 
@@ -82,7 +82,7 @@ public class ToolbeltTrinketRenderer
             return;
         }
         
-        ((IHumanoidRenderStateExtension) h_state).constructeer$setToolbeltEquipment(stack);
+        h_state.setData(ModRenderDataKeys.HUMANOID_TOOLBELT_EQUIPMENT, stack);
         layer.submit(poseStack, submitNodeCollector, packedLight, h_state, yaw, pitch);
     }
 }

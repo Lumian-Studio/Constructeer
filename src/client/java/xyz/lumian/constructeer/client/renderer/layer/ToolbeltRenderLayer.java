@@ -14,9 +14,9 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.Equippable;
 import xyz.lumian.constructeer.client.config.ModClientConfig;
-import xyz.lumian.constructeer.client.impl.IHumanoidRenderStateExtension;
 import xyz.lumian.constructeer.client.model.ModModelLayers;
 import xyz.lumian.constructeer.client.model.ToolbeltModel;
+import xyz.lumian.constructeer.client.renderer.state.ModRenderDataKeys;
 
 
 
@@ -52,7 +52,8 @@ public class ToolbeltRenderLayer<S extends HumanoidRenderState, M extends Entity
             return;
         }
         
-        final ItemStack  toolbelt   = ((IHumanoidRenderStateExtension) renderState).constructeer$getToolbeltEquipment();
+        final ItemStack  toolbelt   = renderState.getDataOrDefault(ModRenderDataKeys.HUMANOID_TOOLBELT_EQUIPMENT,
+                                                                   ItemStack.EMPTY);
         final Equippable equippable = toolbelt.get(DataComponents.EQUIPPABLE);
         
         if (equippable != null && equippable.assetId().isPresent())

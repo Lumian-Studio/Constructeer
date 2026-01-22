@@ -7,7 +7,7 @@
 		"LocalPlayerMixin",
 		"AvatarRendererMixin",
 		"HumanoidMobRendererMixin",
-		"HumanoidRenderStateMixin"
+		"MultiPlayerGameModeMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

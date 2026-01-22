@@ -1,7 +1,9 @@
 package xyz.lumian.constructeer.client.data;
 
+import com.google.common.collect.Streams;
 import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.model.ItemModelUtils;
@@ -11,15 +13,16 @@ import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import xyz.lumian.constructeer.ModDefine;
 import xyz.lumian.constructeer.client.renderer.item.PouchContainedItemSpecialRenderer;
 import xyz.lumian.constructeer.client.renderer.item.conditional.MenuComplies;
 import xyz.lumian.constructeer.client.renderer.item.conditional.PouchHasContent;
 import xyz.lumian.constructeer.client.renderer.item.conditional.predicate.InPouchSlot;
-import xyz.lumian.constructeer.container.ModMenus;
 import xyz.lumian.constructeer.item.ModItems;
 
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.Objects;
 
 
 
@@ -41,9 +44,6 @@ public class ModModelProvider
     public void generateItemModels(final ItemModelGenerators generator)
     {
         generator.generateFlatItem(ModItems.TOOLBELT, ModelTemplates.FLAT_ITEM);
-        {
-        
-        }
         
         {
             // Base un-dyed pouch
@@ -53,6 +53,23 @@ public class ModModelProvider
             Arrays.stream(DyeColor.values()).forEach(dye -> this.generatePouchModels(
                 generator,
                 ModItems.POUCH_BY_DYE.get(dye)));
+        }
+        
+        Streams
+            .concat(
+                ModItems.HAMMER_BY_MATERIAL.values().stream(),
+                ModItems.PLOW_BY_MATERIAL  .values().stream(),
+                ModItems.SAW_BY_MATERIAL   .values().stream()
+            )
+            .forEach(item -> generator.generateFlatItem(item, ModelTemplates.FLAT_HANDHELD_ITEM));
+        
+        if (FabricLoader.getInstance().isDevelopmentEnvironment())
+        {
+            final ItemModel.Unbaked unbaked = ItemModelUtils.plainModel(ModelTemplates.FLAT_HANDHELD_ITEM.create(
+                ModDefine.id("debug_stick"),
+                TextureMapping.layer0(Items.STICK),
+                generator.modelOutput));
+            generator.itemModelOutput.accept(Objects.requireNonNull(ModItems.DEBUG_ITEM), unbaked);
         }
     }
     

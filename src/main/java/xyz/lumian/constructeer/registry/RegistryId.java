@@ -1,7 +1,8 @@
-package xyz.lumian.constructeer.util;
+package xyz.lumian.constructeer.registry;
 
 import com.google.common.base.MoreObjects;
 import com.mojang.datafixers.util.Either;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
@@ -9,6 +10,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -19,47 +21,70 @@ import java.util.function.Function;
 public record RegistryId<T>(ResourceKey<? extends Registry<T>> registryKey, Either<Identifier, TagKey<T>> id)
 {
     //******************************************************************************************************************
-    public static <T> RegistryId<T> forRegistry(final ResourceKey<Registry<T>> registry, final Identifier id)
+    public static <T> RegistryId<T> forIdentifier(final ResourceKey<Registry<T>> registry, final Identifier id)
     {
         return new RegistryId<>(registry, Either.left(id));
     }
     
-    public static <T> RegistryId<T> forRegistry(final ResourceKey<Registry<T>> registry, final TagKey<T> tag)
+    public static <T> RegistryId<T> forTag(final TagKey<T> tag)
     {
-        return new RegistryId<>(registry, Either.right(tag));
+        return new RegistryId<>(tag.registry(), Either.right(tag));
     }
     
-    public static <T> RegistryId<T> parse(final ResourceKey<Registry<T>> registry, String value)
+    public static <T> RegistryId<T> parse(final ResourceKey<Registry<T>> registry, final String value)
     {
         return new RegistryId<>(registry, (value.startsWith("#")
             ? Either.right(TagKey.create(registry, Identifier.parse(value.substring(1))))
             : Either.left(Identifier.parse(value))));
     }
     
+    public static <T> @Nullable RegistryId<T> tryParse(final ResourceKey<Registry<T>> registry, String value)
+    {
+        final boolean is_tag;
+        
+        if (value.startsWith("#"))
+        {
+            is_tag = true;
+            value  = value.substring(1);
+        }
+        else is_tag = false;
+        
+        final Identifier id = Identifier.tryParse(value);
+        
+        if (id == null)
+        {
+            return null;
+        }
+        
+        return new RegistryId<>(registry, (is_tag ? Either.right(TagKey.create(registry, id)) : Either.left(id)));
+    }
+    
     public static <T>  RegistryId<T> untrustedId(final ResourceKey<Registry<T>> registry,
                                                  final String                   namespace,
                                                  final String                   path)
     {
-        return RegistryId.forRegistry(registry, Identifier.fromNamespaceAndPath(namespace, path));
+        return RegistryId.forIdentifier(registry, Identifier.fromNamespaceAndPath(namespace, path));
     }
     
     public static <T> RegistryId<T> vanillaId(final ResourceKey<Registry<T>> registry, final String path)
     {
-        return RegistryId.forRegistry(registry, Identifier.withDefaultNamespace(path));
+        return RegistryId.forIdentifier(registry, Identifier.withDefaultNamespace(path));
     }
     
     public static <T>  RegistryId<T> untrustedTag(final ResourceKey<Registry<T>> registry,
                                                   final String                   namespace,
                                                   final String                   path)
     {
-        return RegistryId.forRegistry(
+        return new RegistryId<>(
             registry,
-            TagKey.create(registry, Identifier.fromNamespaceAndPath(namespace, path)));
+            Either.right(TagKey.create(registry, Identifier.fromNamespaceAndPath(namespace, path))));
     }
     
     public static <T> RegistryId<T> vanillaTag(final ResourceKey<Registry<T>> registry, final String path)
     {
-        return RegistryId.forRegistry(registry, TagKey.create(registry, Identifier.withDefaultNamespace(path)));
+        return new RegistryId<>(
+            registry,
+            Either.right(TagKey.create(registry, Identifier.withDefaultNamespace(path))));
     }
     
     public static boolean isValidRegistryId(String id)
@@ -94,16 +119,33 @@ public record RegistryId<T>(ResourceKey<? extends Registry<T>> registryKey, Eith
     //==================================================================================================================
     public Optional<HolderSet<T>> resolveOptional(final Registry<T> registry)
     {
-        return this.id.map(
-            (id  -> registry.get(id) .map(HolderSet::direct)),
-            (tag -> registry.get(tag).map(Function.identity())));
+        return this.id
+            .map((id -> registry.get(id).map(HolderSet::direct)), registry::get)
+            .map(Function.identity());
+    }
+    
+    public Optional<Holder<T>> resolveSingleOptional(final Registry<T> registry)
+    {
+        return this.id
+            .<Optional<? extends Holder<T>>>map(registry::get, (tag -> Optional.empty()))
+            .map(Function.identity());
     }
     
     public HolderSet<T> resolve(final Registry<T> lookup) { return this.getOrThrow(this.resolveOptional(lookup)); }
     
+    public Holder<T> resolveSingle(final Registry<T> lookup)
+    {
+        return this.getOrThrowSingle(this.resolveSingleOptional(lookup));
+    }
+    
     public Optional<HolderSet<T>> resolveOptional(final HolderLookup.Provider lookup)
     {
         return lookup.get(this.registryKey).flatMap(ref -> this.resolveOptional(ref.value()));
+    }
+    
+    public Optional<Holder<T>> resolveSingleOptional(final HolderLookup.Provider lookup)
+    {
+        return lookup.get(this.registryKey).flatMap(ref -> this.resolveSingleOptional(ref.value()));
     }
     
     public HolderSet<T> resolve(final HolderLookup.Provider lookup)
@@ -111,22 +153,44 @@ public record RegistryId<T>(ResourceKey<? extends Registry<T>> registryKey, Eith
         return this.getOrThrow(this.resolveOptional(lookup));
     }
     
+    public Holder<T> resolveSingle(final HolderLookup.Provider lookup)
+    {
+        return this.getOrThrowSingle(this.resolveSingleOptional(lookup));
+    }
+    
     @SuppressWarnings("unchecked")
     public Optional<HolderSet<T>> resolveOptional()
     {
         return BuiltInRegistries.REGISTRY
-            .getOptional(this.registryKey.identifier())
+            .get(this.registryKey.identifier())
             .flatMap(reg -> this.resolveOptional((Registry<T>) reg));
     }
     
+    @SuppressWarnings("unchecked")
+    public Optional<Holder<T>> resolveSingleOptional()
+    {
+        return BuiltInRegistries.REGISTRY
+            .get(this.registryKey.identifier())
+            .flatMap(reg -> this.resolveSingleOptional((Registry<T>) reg));
+    }
+    
     public HolderSet<T> resolve() { return this.getOrThrow(this.resolveOptional()); }
+    public Holder<T> resolveSingle() { return this.getOrThrowSingle(this.resolveSingleOptional()); }
     
     //==================================================================================================================
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private HolderSet<T> getOrThrow(final Optional<HolderSet<T>> optional)
+    private HolderSet<T> getOrThrow(final Optional<? extends HolderSet<T>> optional)
     {
         return optional.orElseThrow(() -> new IllegalStateException("registry id " + this + " could not be looked up"));
     }
+    
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private Holder<T> getOrThrowSingle(final Optional<? extends Holder<T>> optional)
+    {
+        return optional.orElseThrow(() -> new IllegalStateException("registry id " + this + " could not be looked up"));
+    }
+    
+    public String asIdString() { return this.id.map(Identifier::toString, (tag -> ("#" + tag.location()))); }
     
     //==================================================================================================================
     @Override

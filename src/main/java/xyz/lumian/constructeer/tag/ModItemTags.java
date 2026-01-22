@@ -20,25 +20,15 @@ public final class ModItemTags
     
     //==================================================================================================================
     // MOD TAGS
-    public static final TagKey<Item> POUCHES;
-    public static final TagKey<Item> HAMMERS;
-    public static final TagKey<Item> PLOWS;
-    public static final TagKey<Item> SAWS;
+    public static final TagKey<Item> MULTI_MINING_TOOLS = mod("multi_mining_tools");
+    public static final TagKey<Item> POUCHES            = mod("pouches");
+    public static final TagKey<Item> HAMMERS            = mod("hammers");
+    public static final TagKey<Item> PLOWS              = mod("plows");
+    public static final TagKey<Item> SAWS               = mod("saws");
     
     //==================================================================================================================
     // COMMON TAGS (for mod use only)
     public static final TagKey<Item> COMMON_TOOLS = common("tools");
-    
-    //==================================================================================================================
-    static
-    {
-        POUCHES = mod("pouches");
-        HAMMERS = mod("hammers");
-        PLOWS   = mod("plows");
-        SAWS    = mod("saws");
-        
-        ((FreezableMap<Identifier, TagKey<Item>>) BY_ID).freeze();
-    }
     
     //******************************************************************************************************************
     public static TagKey<Item> mod(final String path)

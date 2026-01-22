@@ -4,14 +4,15 @@ import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
 import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.fml.config.ModConfig;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.config.ModServerConfig;
-import xyz.lumian.constructeer.item.ItemAttorney;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 
 
@@ -19,6 +20,22 @@ import java.util.*;
 public class ConstructeerMain
     implements ModInitializer
 {
+    //******************************************************************************************************************
+    private static final List<Consumer<ModServerConfig>> SERVER_CONFIG_RELOAD_LISTENERS = new ArrayList<>();
+    
+    //******************************************************************************************************************
+    public static void addServerReloadListener(final Consumer<ModServerConfig> listener)
+    {
+        ConstructeerMain.SERVER_CONFIG_RELOAD_LISTENERS.add(listener);
+    }
+    
+    //==================================================================================================================
+    @ApiStatus.Internal
+    public static void reloadServerConfig()
+    {
+        ConstructeerMain.SERVER_CONFIG_RELOAD_LISTENERS.forEach(listener -> listener.accept(ModServerConfig.INSTANCE));
+    }
+    
     //******************************************************************************************************************
     private @Nullable MinecraftServer server;
     
@@ -30,7 +47,6 @@ public class ConstructeerMain
 		Bootstrap.initialise();
   
 		ModDefine.LOGGER.info("Loading configurations...");
-        
         ConfigRegistry.INSTANCE.register(ModDefine.MOD_ID, ModConfig.Type.SERVER, ModServerConfig.SPEC);
         ModConfigEvents.reloading(ModDefine.MOD_ID).register(this::reloadConfig);
         
@@ -38,25 +54,11 @@ public class ConstructeerMain
         ServerLifecycleEvents.SERVER_STARTING.register(server -> this.server = server);
         ServerLifecycleEvents.SERVER_STOPPED .register(server -> this.server = null);
         
-        // Reload whatever can be reloaded once any of our configs reloaded
-        ModConfigEvents.reloading(ModDefine.MOD_ID).register(this::reloadConfig);
-        
         // We have to build the valid toolset once the server started from the initial configuration
         // This only runs on either the physical integrated client server, or on the physical dedicated server
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> ItemAttorney.updateValidTools(server.registryAccess()));
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> ConstructeerMain.reloadServerConfig());
         
-        if (FabricLoader.getInstance().isDevelopmentEnvironment())
-        {
-            ServerLifecycleEvents.SERVER_STARTED.register(server ->
-            {
-                if (ItemAttorney.getValidPouchTools().get().size() == 0)
-                {
-                    ModDefine.LOGGER.warn("Valid item tool set was empty");
-                }
-            });
-        }
-        
-        ModDefine.LOGGER.info("Constructeer initialized");
+        ModDefine.LOGGER.info("Mod is ready!");
 	}
     
     //==================================================================================================================
@@ -67,7 +69,7 @@ public class ConstructeerMain
             // running either on an integrated server on the physical client, or we are on a dedicated server
             if (this.server != null)
             {
-                ItemAttorney.updateValidTools(this.server.registryAccess());
+                ConstructeerMain.reloadServerConfig();
             }
         }
     }
