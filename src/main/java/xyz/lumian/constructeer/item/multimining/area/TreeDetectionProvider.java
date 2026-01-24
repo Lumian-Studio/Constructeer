@@ -41,15 +41,21 @@ import java.util.*;
 /// output returns `false`, no more blocks will be scanned.
 ///
 /// The return value of the provider method determines whether the operation upon ending determined that the scanned
-/// area is in fact a valid tree, which only holds true if there is at least one log and one associated leaf block.
+/// area is in fact a valid tree, which only holds true if there is at least one log, one associated leaf block,
+/// and the count of the blocks is less or equal to [#maxBlockCount] (or [#stopIfExceedingMaximum] is `false`) in which
+/// case it will return [xyz.lumian.constructeer.item.multimining.area.IAreaProvider.Result#SUCCESS]. However, if the
+/// tree is a valid tree but [#maxBlockCount] is exceeded and [#stopIfExceedingMaximum] is `true`, then this will
+/// return [xyz.lumian.constructeer.item.multimining.area.IAreaProvider.Result#PASS],
+/// otherwise [xyz.lumian.constructeer.item.multimining.area.IAreaProvider.Result#FAILED].
 public class TreeDetectionProvider
     implements IAreaProvider
 {
     //******************************************************************************************************************
-    public static final int     DEFAULT_MAX_LEAF_DISTANCE = 7;
-    public static final int     DEFAULT_MAX_BLOCK_COUNT   = 500;
-    public static final int     DEFAULT_MIN_LEAVES_COUNT  = 1;
-    public static final boolean DEFAULT_SCAN_DOWNWARDS    = false;
+    public static final int     DEFAULT_MAX_LEAF_DISTANCE         = 7;
+    public static final int     DEFAULT_MAX_BLOCK_COUNT           = 500;
+    public static final int     DEFAULT_MIN_LEAVES_COUNT          = 1;
+    public static final boolean DEFAULT_SCAN_DOWNWARDS            = false;
+    public static final boolean DEFAULT_STOP_IF_EXCEEDING_MAXIMUM = true;
     
     public static final MapCodec<TreeDetectionProvider> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance
         .group(
@@ -67,7 +73,10 @@ public class TreeDetectionProvider
                  .forGetter(prov -> prov.minLeavesCount),
             Codec.BOOL
                 .optionalFieldOf("scanDownwards", TreeDetectionProvider.DEFAULT_SCAN_DOWNWARDS)
-                .forGetter(prov -> prov.scanDownwards))
+                .forGetter(prov -> prov.scanDownwards),
+            Codec.BOOL
+                .optionalFieldOf("stopIfExceedingMaximum", TreeDetectionProvider.DEFAULT_STOP_IF_EXCEEDING_MAXIMUM)
+                .forGetter(prov -> prov.stopIfExceedingMaximum))
         .apply(instance, TreeDetectionProvider::new));
     
     public static final StreamCodec<RegistryFriendlyByteBuf, TreeDetectionProvider> STREAM_CODEC = StreamCodec
@@ -77,6 +86,7 @@ public class TreeDetectionProvider
             ByteBufCodecs.VAR_INT,                                      (prov -> prov.maxBlockCount),
             ByteBufCodecs.VAR_INT,                                      (prov -> prov.minLeavesCount),
             ByteBufCodecs.BOOL,                                         (prov -> prov.scanDownwards),
+            ByteBufCodecs.BOOL,                                         (prov -> prov.stopIfExceedingMaximum),
             TreeDetectionProvider::new);
     
     //------------------------------------------------------------------------------------------------------------------
@@ -110,19 +120,24 @@ public class TreeDetectionProvider
     /// Whether logs should be scanned below the initial log block.
     public final boolean scanDownwards;
     
+    /// Whether the tree should not be considered a tree if the scanned blocks exceed [#maxBlockCount].
+    public final boolean stopIfExceedingMaximum;
+    
     //******************************************************************************************************************
     /// Creates a new [TreeDetectionProvider] instance.
-    /// @param validStemBlocks   [#validStemBlocks]
-    /// @param maxLeafDistance   [#maxLeafDistance]
-    /// @param maxBlockCount     [#maxBlockCount]
-    /// @param minLeavesCount    [#minLeavesCount]
-    /// @param scanDownwards     [#scanDownwards]
+    /// @param validStemBlocks        [#validStemBlocks]
+    /// @param maxLeafDistance        [#maxLeafDistance]
+    /// @param maxBlockCount          [#maxBlockCount]
+    /// @param minLeavesCount         [#minLeavesCount]
+    /// @param scanDownwards          [#scanDownwards]
+    /// @param stopIfExceedingMaximum [#stopIfExceedingMaximum]
     public TreeDetectionProvider(
         final HolderSet<Block> validStemBlocks,
         final int              maxLeafDistance,
         final int              maxBlockCount,
         final int              minLeavesCount,
-        final boolean          scanDownwards
+        final boolean          scanDownwards,
+        final boolean          stopIfExceedingMaximum
     )
     {
         if (maxLeafDistance < 1)
@@ -135,11 +150,17 @@ public class TreeDetectionProvider
             throw new IllegalArgumentException("minimum leaf count must be 0 or above");
         }
         
-        this.validStemBlocks = validStemBlocks;
-        this.maxLeafDistance = maxLeafDistance;
-        this.maxBlockCount   = maxBlockCount;
-        this.minLeavesCount  = minLeavesCount;
-        this.scanDownwards   = scanDownwards;
+        if (maxBlockCount < 0)
+        {
+            throw new IllegalArgumentException("maximum block count may not be less than 0");
+        }
+        
+        this.validStemBlocks        = validStemBlocks;
+        this.maxLeafDistance        = maxLeafDistance;
+        this.maxBlockCount          = maxBlockCount;
+        this.minLeavesCount         = minLeavesCount;
+        this.scanDownwards          = scanDownwards;
+        this.stopIfExceedingMaximum = stopIfExceedingMaximum;
     }
     
     /// Creates a defaulted [TreeDetectionProvider] instance.
@@ -150,7 +171,8 @@ public class TreeDetectionProvider
              TreeDetectionProvider.DEFAULT_MAX_LEAF_DISTANCE,
              TreeDetectionProvider.DEFAULT_MAX_BLOCK_COUNT,
              TreeDetectionProvider.DEFAULT_MIN_LEAVES_COUNT,
-             TreeDetectionProvider.DEFAULT_SCAN_DOWNWARDS);
+             TreeDetectionProvider.DEFAULT_SCAN_DOWNWARDS,
+             TreeDetectionProvider.DEFAULT_STOP_IF_EXCEEDING_MAXIMUM);
     }
     
     //==================================================================================================================
@@ -158,12 +180,12 @@ public class TreeDetectionProvider
     
     //==================================================================================================================
     @Override
-    public boolean provide(final Direction face, final Player player, final ItemStack stack, final BlockContext block,
-                           final int modifier, final Output output)
+    public Result provide(final Direction face, final Player player, final ItemStack stack, final BlockContext block,
+                          final int modifier, final Output output)
     {
-        if (!block.is(this.validStemBlocks))
+        if (!block.is(this.validStemBlocks) || this.maxBlockCount < (this.minLeavesCount + 1))
         {
-            return false;
+            return Result.FAILED;
         }
         
         final Set<BlockPos> visited = new HashSet<>(32);
@@ -179,11 +201,21 @@ public class TreeDetectionProvider
         
         while (!nodes.isEmpty())
         {
+            if (count == this.maxBlockCount)
+            {
+                if (this.stopIfExceedingMaximum)
+                {
+                    return Result.PASS;
+                }
+                
+                return (leaf_count >= this.minLeavesCount ? Result.SUCCESS : Result.FAILED);
+            }
+            
             final BlockContext log = nodes.pollFirst();
             
-            if (count > this.maxBlockCount || !output.acceptAndTest(log))
+            if (!output.acceptAndTest(log))
             {
-                return (leaf_count >= this.minLeavesCount);
+                return (leaf_count >= this.minLeavesCount ? Result.SUCCESS : Result.FAILED);
             }
             
             ++count;
@@ -239,23 +271,28 @@ public class TreeDetectionProvider
                             final BlockContext leaf     = leaf_nodes.dequeue();
                             final int          distance = leaf.state().getValue(BlockStateProperties.DISTANCE);
                             
-                            if (count > this.maxBlockCount)
+                            if (distance > this.maxLeafDistance)
                             {
-                                return (leaf_count >= this.minLeavesCount);
+                                continue;
+                            }
+                            
+                            if (count == this.maxBlockCount)
+                            {
+                                if (this.stopIfExceedingMaximum)
+                                {
+                                    return Result.PASS;
+                                }
+                                
+                                return (leaf_count >= this.minLeavesCount ? Result.SUCCESS : Result.FAILED);
                             }
                             
                             if (!output.acceptAndTest(leaf))
                             {
-                                return ((leaf_count + 1) >= this.minLeavesCount);
+                                return (leaf_count >= this.minLeavesCount ? Result.SUCCESS : Result.FAILED);
                             }
                             
                             ++leaf_count;
                             ++count;
-                            
-                            if (distance == this.maxLeafDistance)
-                            {
-                                continue;
-                            }
                             
                             for (final var node_dir : Direction.values())
                             {
@@ -282,7 +319,7 @@ public class TreeDetectionProvider
                                         continue;
                                     }
                                 }
-                                else if (distance == 1 && leaf_block.is(this.validStemBlocks))
+                                else if (leaf_block.is(this.validStemBlocks))
                                 {
                                     nodes.addLast(leaf_block);
                                 }
@@ -307,6 +344,6 @@ public class TreeDetectionProvider
             }
         }
         
-        return (leaf_count >= this.minLeavesCount);
+        return (leaf_count >= this.minLeavesCount ? Result.SUCCESS : Result.FAILED);
     }
 }

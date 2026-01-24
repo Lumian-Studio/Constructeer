@@ -24,6 +24,18 @@ public interface IAreaProvider
         default void accept(final BlockContext block) { this.acceptAndTest(block); }
     }
     
+    enum Result
+    {
+        /// The action was successful, break all the block.
+        SUCCESS,
+        
+        /// The action failed, break only the mined block.
+        FAILED,
+        
+        /// The action failed, but the mined block should not be destroyed.
+        PASS
+    }
+    
     //******************************************************************************************************************
     MapCodec<IAreaProvider> MAP_CODEC = ModRegistries.BuiltIn.AREA_PROVIDER_TYPE.byNameCodec()
         .dispatchMap(IAreaProvider::type, AreaProviderType::codec);
@@ -46,6 +58,6 @@ public interface IAreaProvider
     /// @param output   The output where provided [BlockContext] objects will be sent too; optionally returns a
     ///                 boolean that can be used to determine whether any further collection of blocks should be
     ///                 canceled
-    /// @return `true` if the action is considered successful, `false` otherwise
-    boolean provide(Direction face, Player player, ItemStack stack, BlockContext block, int modifier, Output output);
+    /// @return The action [Result]
+    Result provide(Direction face, Player player, ItemStack stack, BlockContext block, int modifier, Output output);
 }

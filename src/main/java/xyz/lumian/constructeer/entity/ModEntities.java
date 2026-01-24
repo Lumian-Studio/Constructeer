@@ -19,7 +19,7 @@ public final class ModEntities
         "falling_object",
         EntityType.Builder
             .of(FallingObjectEntity::new, MobCategory.MISC)
-            .sized(0.0F, 0.0F)
+            .sized(1.0F, 1.0F)
             .clientTrackingRange(10)
             .updateInterval(1));
     

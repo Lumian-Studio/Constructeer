@@ -1,6 +1,5 @@
 package xyz.lumian.constructeer.item.multimining.timber;
 
-import com.mojang.math.Transformation;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
@@ -8,10 +7,11 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.Tool;
-import org.joml.Matrix4f;
+import net.minecraft.world.phys.Vec3;
 import xyz.lumian.constructeer.entity.FallingObjectEntity;
 import xyz.lumian.constructeer.entity.ModEntities;
 import xyz.lumian.constructeer.item.multimining.MultiMiningBox;
+import xyz.lumian.constructeer.sound.ModSoundEvents;
 import xyz.lumian.constructeer.util.BlockContext;
 
 import java.util.List;
@@ -54,14 +54,20 @@ public class FallingTimberMode
         
         if (entity != null)
         {
+            final MultiMiningBox box = MultiMiningBox.create(blocks, drop_collector, mainBlock);
+            
             blocks.forEach(block -> TimberModeHelper.destroy(player, block.state(), block.pos(), true));
-            entity.snapTo(mainBlock.pos(), 0f, 0f);
+            entity.snapTo(box.base().add(new Vec3(mainBlock.pos())), 0f, 0f);
             
-            final Transformation transformation = new Transformation(new Matrix4f().translation(-0.5f, 0.0f, -0.5f));
-            entity.setTransformation(transformation);
+            final Direction fall_face;
             
-            entity.setFallingDirection(face.getOpposite());
-            entity.setBox(MultiMiningBox.create(blocks, drop_collector, mainBlock));
+            if (face.getAxis() == Direction.Axis.Y)
+            {
+                fall_face = player.getDirection();
+            } else fall_face = face.getOpposite();
+            
+            entity.setBoxAndFallDirection(box, fall_face);
+            entity.setEffect(ModSoundEvents.TREE_FALLING);
             
             level.addFreshEntity(entity);
         }

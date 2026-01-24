@@ -6,12 +6,16 @@ import net.minecraft.client.renderer.entity.DisplayRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.DisplayEntityRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.AxisAngle4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import xyz.lumian.constructeer.entity.FallingObjectEntity;
+import xyz.lumian.constructeer.item.multimining.MultiMiningBox;
 
 import java.util.Objects;
 
@@ -53,17 +57,29 @@ public class FallingObjectRenderer
     {
         Objects.requireNonNull(renderState.subRenderState);
         
-        for (final var part : renderState.subRenderState.parts)
+        final MultiMiningBox box = renderState.subRenderState.box;
+        {
+            final Vec3i       normal = renderState.subRenderState.direction.getUnitVec3i();
+            final Vector3f    motion = renderState.subRenderState.motion;
+            final Quaternionf quat   = new Quaternionf(new AxisAngle4f(
+                renderState.subRenderState.rotation,
+                normal.getZ(), 0, (normal.getX() * -1)));
+            pose.rotateAround(quat, motion.x(), motion.y(), motion.z());
+        }
+        
+        for (final var part : box.parts())
         {
             final BlockState state = part.state();
             
             if (state.getRenderShape() == RenderShape.MODEL)
             {
-                final Vec3i offset = part.offset();
-                
                 pose.pushPose();
-                pose.translate(offset.getX(), offset.getY(), offset.getZ());
-                nodes.submitBlock(pose, part.state(), light, OverlayTexture.NO_OVERLAY, renderState.outlineColor);
+                {
+                    final Vec3i offset = part.offset();
+                    final Vec3  base   = box.base();
+                    pose.translate((offset.getX() - base.x()), offset.getY(), (offset.getZ() - base.z()));
+                    nodes.submitBlock(pose, state, light, OverlayTexture.NO_OVERLAY, renderState.outlineColor);
+                }
                 pose.popPose();
             }
         }

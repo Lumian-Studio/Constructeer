@@ -26,12 +26,12 @@ public interface IToolProvider
     }
     
     @Override
-    default boolean provide(final Direction face, final Player player, final ItemStack stack, final BlockContext block,
-                            final int modifier, final Output output)
+    default Result provide(final Direction face, final Player player, final ItemStack stack, final BlockContext block,
+                           final int modifier, final Output output)
     {
         if (!this.predicate().canExecute(player, block, stack))
         {
-            return false;
+            return Result.FAILED;
         }
         
         return IThreeByThreeProvider.super.provide(face, player, stack, block, modifier, output);

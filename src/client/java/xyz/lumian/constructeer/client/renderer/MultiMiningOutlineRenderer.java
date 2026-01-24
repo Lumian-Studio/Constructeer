@@ -190,18 +190,19 @@ enum MultiMiningOutlineRenderer
         
         if (this.shape.isDirty(block, face) || this.prevFace != face || this.prevSneaking != sneak)
         {
-            final List<BlockContext> blocks = mm.execute(face, player, stack, block).orElse(null);
+            final MultiMining.Action action = mm.execute(face, player, stack, block);
+            
             this.shape.setBlock(block);
             this.prevFace     = face;
             this.prevSneaking = sneak;
             
-            if (blocks == null)
+            if (action.result() != MultiMining.Result.SUCCESS)
             {
                 this.shape.doNotRender();
                 return;
             }
             
-            for (final var to_render : blocks)
+            for (final var to_render : action.blocks())
             {
                 if (!to_render.equals(block))
                 {

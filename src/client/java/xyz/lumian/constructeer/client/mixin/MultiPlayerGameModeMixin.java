@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.Packet;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -20,10 +21,14 @@ import java.util.Objects;
 public class MultiPlayerGameModeMixin
 {
     //******************************************************************************************************************
+    @Shadow private float destroyTicks;
+    
+    //******************************************************************************************************************
     @SuppressWarnings("UnstableApiUsage")
     @Inject(
         method = { "method_41935", "method_41932" },
-        at     = @At("HEAD"))
+        at     = @At("HEAD")
+    )
     public void updateLastBreakFaceDirection(final BlockPos blockPos, final Direction direction, final int i,
                                              final CallbackInfoReturnable<Packet<?>> cir)
     {

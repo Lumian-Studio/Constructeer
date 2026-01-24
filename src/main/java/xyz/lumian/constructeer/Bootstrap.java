@@ -2,7 +2,6 @@ package xyz.lumian.constructeer;
 
 import xyz.lumian.constructeer.container.ModMenus;
 import xyz.lumian.constructeer.entity.ModEntities;
-import xyz.lumian.constructeer.entity.ModEntityDataSerialisers;
 import xyz.lumian.constructeer.integration.Compat;
 import xyz.lumian.constructeer.item.ModItems;
 import xyz.lumian.constructeer.item.component.ModComponents;
@@ -13,6 +12,7 @@ import xyz.lumian.constructeer.item.multimining.timber.TimberMode;
 import xyz.lumian.constructeer.item.recipe.ModRecipeSerialisers;
 import xyz.lumian.constructeer.network.ModPayloads;
 import xyz.lumian.constructeer.registry.ModRegistries;
+import xyz.lumian.constructeer.sound.ModSoundEvents;
 import xyz.lumian.constructeer.stat.ModStats;
 
 
@@ -36,5 +36,6 @@ public class Bootstrap
         MultiMiningPredicateType.initialise();
         TimberMode              .initialise();
         ModEntities             .initialise();
+        ModSoundEvents          .initialise();
     }
 }

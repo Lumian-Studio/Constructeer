@@ -12,10 +12,13 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.monster.piglin.PiglinAi;
@@ -23,6 +26,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.gameevent.GameEvent;
 import org.jspecify.annotations.Nullable;
+import xyz.lumian.constructeer.ModLang;
+import xyz.lumian.constructeer.config.ModServerConfig;
 import xyz.lumian.constructeer.enchantment.ModEnchantments;
 import xyz.lumian.constructeer.entity.player.PlayerAttachments;
 import xyz.lumian.constructeer.item.multimining.area.IAreaProvider;
@@ -125,8 +130,27 @@ public record MultiMining(
         @Override public String getSerializedName() { return this.name().toLowerCase(Locale.ROOT); }
     }
     
-    //******************************************************************************************************************
-    public static final int TIMBER_CAP = 1000;
+    public enum Result
+    {
+        SUCCESS(true,  false),
+        CAPPED (false, true),
+        FAILED (true,  true),
+        PASS   (false, true),
+        ;
+        
+        //**************************************************************************************************************
+        public final boolean shouldBreakMined;
+        public final boolean shouldCancel;
+        
+        //**************************************************************************************************************
+        Result(final boolean shouldBreakBlock, final boolean shouldCancel)
+        {
+            this.shouldBreakMined = shouldBreakBlock;
+            this.shouldCancel     = shouldCancel;
+        }
+    }
+    
+    public record Action(List<BlockContext> blocks, Result result) {}
     
     //******************************************************************************************************************
     public static final Codec<MultiMining> CODEC = RecordCodecBuilder.create(instance -> instance
@@ -174,7 +198,7 @@ public record MultiMining(
                 
                 if (look_dir != null)
                 {
-                    return !mm.mine(look_dir, player, stack, new BlockContext(level, state, pos));
+                    return mm.mine(look_dir, player, stack, new BlockContext(level, state, pos));
                 }
             }
             
@@ -220,19 +244,30 @@ public record MultiMining(
         //noinspection resource
         if (!(block.level() instanceof ServerLevel level))
         {
-            return false;
+            return true;
         }
         
         final List<BlockContext> blocks;
         {
-            final Optional<List<BlockContext>> blocks_opt = this.execute(face, player, stack, block);
+            final Action action = this.execute(face, player, stack, block);
             
-            if (blocks_opt.isEmpty())
+            if (action.result.shouldCancel)
             {
-                return false;
+                if (action.result == Result.CAPPED)
+                {
+                    final Component message = ModLang.MULTI_MINING_STRUCTURE_TOO_BIG;
+                    ((ServerPlayer) player).connection.send(new ClientboundSetActionBarTextPacket(message));
+                }
+                
+                return action.result.shouldBreakMined;
             }
             
-            blocks = blocks_opt.orElseThrow();
+            blocks = action.blocks;
+        }
+        
+        if (blocks.isEmpty())
+        {
+            return true;
         }
         
         /// VOLATILE [net.minecraft.server.level.ServerPlayerGameMode#destroyBlock(BlockPos)]
@@ -271,11 +306,10 @@ public record MultiMining(
             }
         }
         
-        return true;
+        return false;
     }
     
-    public Optional<List<BlockContext>> execute(final Direction face, final Player player, final ItemStack stack,
-                                                final BlockContext block)
+    public Action execute(final Direction face, final Player player, final ItemStack stack, final BlockContext block)
     {
         @SuppressWarnings("resource")
         final int penetration = player.level().registryAccess()
@@ -284,23 +318,31 @@ public record MultiMining(
             .map    (ref -> stack.getEnchantments().getLevel(ref))
             .orElse (0);
         
+        final int                         cap    = ModServerConfig.INSTANCE.multiMiningHardLimit().getAsInt();
         final Map<BlockPos, BlockContext> blocks = new Object2ObjectArrayMap<>(32);
         final IAreaProvider.Output        output = (to_mine ->
         {
             blocks.put(to_mine.pos(), to_mine);
-            return (blocks.size() < (MultiMining.TIMBER_CAP + 1));
+            return (blocks.size() <= cap);
         });
         
-        if (this.areaProvider().provide(face, player, stack, block, penetration, output))
+        final IAreaProvider.Result res = this.areaProvider().provide(face, player, stack, block, penetration, output);
+        
+        if (res == IAreaProvider.Result.SUCCESS)
         {
-            if (blocks.size() > MultiMining.TIMBER_CAP)
+            if (blocks.size() > cap)
             {
-                return Optional.empty();
+                return new Action(new ArrayList<>(blocks.values()), Result.CAPPED);
             }
             
-            return Optional.of(new ArrayList<>(blocks.values()));
+            return new Action(new ArrayList<>(blocks.values()), Result.SUCCESS);
         }
         
-        return Optional.empty();
+        return new Action(List.of(), switch (res)
+        {
+            case PASS    -> Result.PASS;
+            case FAILED  -> Result.FAILED;
+            case SUCCESS -> throw new IllegalStateException("this should not happen");
+        });
     }
 }

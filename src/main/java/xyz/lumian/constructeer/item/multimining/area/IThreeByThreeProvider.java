@@ -37,8 +37,8 @@ public interface IThreeByThreeProvider
     boolean acceptBlock(Player player, ItemStack stack, BlockContext mainBlock, BlockContext relBlock);
     
     @Override
-    default boolean provide(final Direction face, final Player player, final ItemStack stack, final BlockContext block,
-                            final int modifier, final Output output)
+    default Result provide(final Direction face, final Player player, final ItemStack stack, final BlockContext block,
+                           final int modifier, final Output output)
     {
         final Cuboid cuboid = IThreeByThreeProvider.AXIS_CUBOIDS
             .get(face.getAxis())
@@ -50,10 +50,10 @@ public interface IThreeByThreeProvider
             
             if (this.acceptBlock(player, stack, block, neighbour) && !output.acceptAndTest(neighbour))
             {
-                return true;
+                return Result.SUCCESS;
             }
         }
         
-        return true;
+        return Result.SUCCESS;
     }
 }

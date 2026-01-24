@@ -95,7 +95,11 @@ public enum ModLang
         (() -> "Item in hand is not a valid tool")),
     TOOLBELT_WHEEL_SCREEN_NO_TOOLBELT_FOUND(
         "screen.%s.toolbelt.wheel.no_equipped_toolbelt",
-        (() -> "No toolbelt is currently equipped"))
+        (() -> "No toolbelt is currently equipped")),
+    
+    MULTI_MINING_STRUCTURE_TOO_BIG(
+        "multi_mining.too_big",
+        "Structure too big")
     ;
     
     //******************************************************************************************************************

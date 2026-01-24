@@ -10,7 +10,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import xyz.lumian.constructeer.util.BlockContext;
 
 import java.util.ArrayList;
@@ -21,13 +22,7 @@ import java.util.function.Function;
 
 
 //**********************************************************************************************************************
-public record MultiMiningBox(
-    List<Part>      parts,
-    BoundingBox     box,
-    BlockPos        startPos,
-    int             baseWidth,
-    int             baseDepth
-)
+public record MultiMiningBox(List<Part> parts, Vec3 base, int baseWidth, int baseDepth)
 {
     //******************************************************************************************************************
     public record Part(BlockState state, Vec3i offset, List<ItemStack> drops)
@@ -62,12 +57,9 @@ public record MultiMiningBox(
             Part.CODEC.listOf()
                 .fieldOf("parts")
                 .forGetter(MultiMiningBox::parts),
-            BoundingBox.CODEC
-                .fieldOf("bounding_box")
-                .forGetter(MultiMiningBox::box),
-            BlockPos.CODEC
-                .fieldOf("start_pos")
-                .forGetter(MultiMiningBox::startPos),
+            Vec3.CODEC
+                .fieldOf("base")
+                .forGetter(MultiMiningBox::base),
             Codec.INT
                 .fieldOf("base_width")
                 .forGetter(MultiMiningBox::baseWidth),
@@ -78,8 +70,7 @@ public record MultiMiningBox(
     
     public static final StreamCodec<RegistryFriendlyByteBuf, MultiMiningBox> STREAM_CODEC = StreamCodec.composite(
         Part         .STREAM_CODEC.apply(ByteBufCodecs.list()), MultiMiningBox::parts,
-        BoundingBox  .STREAM_CODEC,                             MultiMiningBox::box,
-        BlockPos     .STREAM_CODEC,                             MultiMiningBox::startPos,
+        Vec3         .STREAM_CODEC,                             MultiMiningBox::base,
         ByteBufCodecs.VAR_INT,                                  MultiMiningBox::baseWidth,
         ByteBufCodecs.VAR_INT,                                  MultiMiningBox::baseDepth,
         MultiMiningBox::new);
@@ -89,12 +80,7 @@ public record MultiMiningBox(
                                         final Function<BlockContext, List<ItemStack>> dropCollector,
                                         final BlockContext                            startBlock)
     {
-        int min_x      = Integer.MAX_VALUE;
         int min_y      = Integer.MAX_VALUE;
-        int min_z      = Integer.MAX_VALUE;
-        int max_x      = Integer.MIN_VALUE;
-        int max_y      = Integer.MIN_VALUE;
-        int max_z      = Integer.MIN_VALUE;
         int base_min_x = Integer.MAX_VALUE;
         int base_min_z = Integer.MAX_VALUE;
         int base_max_x = Integer.MIN_VALUE;
@@ -107,37 +93,29 @@ public record MultiMiningBox(
             final BlockPos pos   = block.pos();
             final int      old_y = min_y;
             
-            min_x = Math.min(min_x, pos.getX());
             min_y = Math.min(min_y, pos.getY());
-            min_z = Math.min(min_z, pos.getZ());
-            max_x = Math.max(max_x, pos.getX());
-            max_y = Math.max(max_y, pos.getY());
-            max_z = Math.max(max_z, pos.getZ());
             
-            if (min_y == old_y)
+            if (min_y < old_y)
+            {
+                base_max_x = base_min_x = pos.getX();
+                base_max_z = base_min_z = pos.getZ();
+            }
+            else if (min_y == pos.getY())
             {
                 base_min_x = Math.min(base_min_x, pos.getX());
                 base_min_z = Math.min(base_min_z, pos.getZ());
                 base_max_x = Math.max(base_max_x, pos.getX());
                 base_max_z = Math.max(base_max_z, pos.getZ());
             }
-            else if (min_y < old_y)
-            {
-                base_min_x = pos.getX();
-                base_min_z = pos.getZ();
-                base_max_x = pos.getX();
-                base_max_z = pos.getY();
-            }
             
-            parts.add(new Part(block.state(), block.pos().subtract(startBlock.pos()), dropCollector.apply(block)));
+            parts.add(new Part(block.state(), pos.subtract(startBlock.pos()), dropCollector.apply(block)));
         }
         
-        final BoundingBox box   = new BoundingBox(min_x, min_y, min_z, max_x, max_y, max_z);
-        final int         width = (base_max_x - base_min_x + 1);
-        final int         depth = (base_max_z - base_min_z + 1);
-        return new MultiMiningBox(parts, box, startBlock.pos(), width, depth);
+        final AABB base = new AABB(base_min_x, min_y, base_min_z, (base_max_x + 1), (min_y + 1), (base_max_z + 1));
+        return new MultiMiningBox(parts, base.getBottomCenter().subtract(new Vec3(startBlock.pos())),
+                                  (int) base.getXsize(), (int) base.getZsize());
     }
     
     //******************************************************************************************************************
-    public MultiMiningBox() { this(List.of(), new BoundingBox(0, 0, 0, 0, 0, 0), BlockPos.ZERO, 0, 0); }
+    public MultiMiningBox() { this(List.of(), Vec3.ZERO, 0, 0); }
 }

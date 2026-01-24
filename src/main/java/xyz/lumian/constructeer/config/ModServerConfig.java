@@ -28,6 +28,10 @@ import java.util.stream.Stream;
 
 //**********************************************************************************************************************
 public record ModServerConfig(
+    // General
+    IntValue                  multiMiningHardLimit,
+    
+    // Toolbelt
     ConfigValue<List<String>> pouchAllowedTools,
     
     // Hammers
@@ -52,7 +56,8 @@ public record ModServerConfig(
     IntValue                  sawMaxBlockCount,
     IntValue                  sawMinLeavesCount,
     BooleanValue              sawChopBelowCut,
-    EnumValue<TimberMode>     sawTimberMode
+    EnumValue<TimberMode>     sawTimberMode,
+    BooleanValue              sawStopIfExceedingMaximum
 )
 {
     //******************************************************************************************************************
@@ -157,7 +162,12 @@ public record ModServerConfig(
     {
         this(
             builder
-                .comment("Declare allowed item IDs that can go in the Constructeer pouch item (tags start with a #)")
+                .comment("Declares the absolute maximum that multi mining tools can destroy, any multi mining action exceeding this limit will be cancelled.")
+                .worldRestart()
+                .defineInRange("multiMining.hardLimit", 1000, 0, Integer.MAX_VALUE),
+            
+            builder
+                .comment("Declare allowed item IDs that can go in the Constructeer pouch item (tags start with a #).")
                 .define(
                     "item.pouch.validTools",
                     (() -> List.of("#" + ModItemTags.COMMON_TOOLS.location())),
@@ -203,7 +213,7 @@ public record ModServerConfig(
                     List::of,
                     ModServerConfig::validateListOfRegistryIds),
             builder
-                .comment("Specifies the behaviour of how blocks are destroyed upon mining with the hammer")
+                .comment("Specifies the behaviour of how blocks are destroyed upon mining with the hammer.")
                 .defineEnum("item.hammer.timberMode", TimberMode.INSTANT, EnumGetMethod.NAME_IGNORECASE),
             
             builder.defineEnum("item.plow.sneakMode", SneakMode.WEAK, EnumGetMethod.NAME_IGNORECASE),
@@ -222,7 +232,7 @@ public record ModServerConfig(
                 List::of,
                 ModServerConfig::validateListOfRegistryIds),
             builder
-                .comment("Specifies the behaviour of how blocks are destroyed upon mining with the plow")
+                .comment("Specifies the behaviour of how blocks are destroyed upon mining with the plow.")
                 .defineEnum("item.plow.timberMode", TimberMode.INSTANT, EnumGetMethod.NAME_IGNORECASE),
             
             builder
@@ -236,21 +246,26 @@ public record ModServerConfig(
                     ModServerConfig::validateListOfRegistryIds),
             builder
                 .comment("""
-                    Specifies the maximum distance block state value of leaf blocks, at which it won't scan for further neighbouring blocks
+                    Specifies the maximum distance block state value of leaf blocks, at which it won't scan for further neighbouring blocks.
                     See https://minecraft.fandom.com/wiki/Block_states#Leaves""")
                 .defineInRange("item.saw.maxLeafDistance", 7, 1, 7),
             builder
-                .comment("Specifies the maximum number of blocks that can be destroyed on one tree, remaining blocks will be left intact")
+                .comment("""
+                    Specifies the maximum number of blocks that can be destroyed on one tree.
+                    "If this is negative, the multi mining hard limit will be imposed instead.""")
                 .defineInRange("item.saw.maxBlockCount", 500, 0, 1000),
             builder
-                .comment("Specifies the minimum leaves a tree stem should have so that it is considered a tree")
+                .comment("Specifies the minimum leaves a tree stem should have so that it is considered a tree.")
                 .defineInRange("item.saw.minLeavesCount", 1, 1, Integer.MAX_VALUE),
             builder
-                .comment("Specifies whether logs below the cut point should also be cut together with the main tree stem")
+                .comment("Specifies whether logs below the cut point should also be cut together with the main tree stem.")
                 .define("item.saw.chopBelowCut", false),
             builder
-                .comment("Specifies the behaviour of how blocks are destroyed upon chopping with the saw")
-                .defineEnum("item.saw.timberMode", TimberMode.FALLING, EnumGetMethod.NAME_IGNORECASE)
+                .comment("Specifies the behaviour of how blocks are destroyed upon chopping with the saw.")
+                .defineEnum("item.saw.timberMode", TimberMode.FALLING, EnumGetMethod.NAME_IGNORECASE),
+            builder
+                .comment("Specifies whether the tree should not be cut if the maximum of blocks has been exceeded.")
+                .define("item.saw.stopIfExceedingMaximum", true)
         );
     }
 }
