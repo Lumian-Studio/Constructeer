@@ -1,3 +1,24 @@
+/// MIT License
+///
+/// Copyright (c) 2026 Lumian Studio
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to deal
+/// in the Software without restriction, including without limitation the rights
+/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+/// copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in all
+/// copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+/// SOFTWARE.
 package xyz.lumian.constructeer.registry;
 
 import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
@@ -9,6 +30,7 @@ import net.minecraft.resources.ResourceKey;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.ModDefine;
 import xyz.lumian.constructeer.item.multimining.area.AreaProviderType;
+import xyz.lumian.constructeer.item.multimining.damage.IMultiMiningDamageType;
 import xyz.lumian.constructeer.item.multimining.predicate.MultiMiningPredicateType;
 import xyz.lumian.constructeer.item.multimining.predicate.ToolPredicate;
 import xyz.lumian.constructeer.item.multimining.timber.IJustinTimbermode;
@@ -33,8 +55,11 @@ public final class ModRegistries
         public static final Registry<MultiMiningPredicateType<?>> MULTI_MINING_PREDICATE_TYPE
             = registerSynced(ModRegistries.MULTI_MINING_PREDICATE_TYPE, null);
         
-        public static final Registry<IJustinTimbermode> TIMBER_MODE
-            = registerSynced(ModRegistries.TIMBER_MODE, null);
+        public static final Registry<IJustinTimbermode> MULTI_MINING_TIMBER_MODE
+            = registerSynced(ModRegistries.MULTI_MINING_TIMBER_MODE, null);
+        
+        public static final Registry<IMultiMiningDamageType> MULTI_MINING_DAMAGE_TYPE
+            = register(ModRegistries.MULTI_MINING_DAMAGE_TYPE, ModDefine.id("single"));
         
         //**************************************************************************************************************
         private static <T> Registry<T> registerOptional(final           ResourceKey<Registry<T>> key,
@@ -89,8 +114,11 @@ public final class ModRegistries
     public static final ResourceKey<Registry<MultiMiningPredicateType<?>>> MULTI_MINING_PREDICATE_TYPE
         = createKey("multi_mining_predicate_type");
     
-    public static final ResourceKey<Registry<IJustinTimbermode>> TIMBER_MODE
+    public static final ResourceKey<Registry<IJustinTimbermode>> MULTI_MINING_TIMBER_MODE
         = createKey("multi_mining_timber_mode");
+    
+    public static final ResourceKey<Registry<IMultiMiningDamageType>> MULTI_MINING_DAMAGE_TYPE
+        = createKey("multi_mining_damage_type");
     
     //******************************************************************************************************************
     private static <T> ResourceKey<Registry<T>> createKey(final String name)

@@ -1,8 +1,30 @@
+/// MIT License
+///
+/// Copyright (c) 2026 Lumian Studio
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to deal
+/// in the Software without restriction, including without limitation the rights
+/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+/// copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in all
+/// copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+/// SOFTWARE.
 package xyz.lumian.constructeer.entity;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -11,6 +33,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
@@ -18,6 +41,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
+import org.joml.AxisAngle4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.item.multimining.MultiMiningBox;
@@ -34,10 +59,39 @@ public class FallingObjectEntity
     public final static class RenderState
     {
         //**************************************************************************************************************
-        public MultiMiningBox box       = new MultiMiningBox();
-        public Vector3f       motion    = new Vector3f();
-        public Direction      direction = Direction.NORTH;
-        public float          rotation;
+        public MultiMiningBox box          = new MultiMiningBox();
+        public Vector3f       motion       = new Vector3f();
+        public Direction      direction    = Direction.NORTH;
+        public float          rotation     = 0f;
+        public float          nextRotation = 0f;
+        
+        //**************************************************************************************************************
+        public float calculateAngle(final float deltaTime)
+        {
+            return Mth.lerp(deltaTime, this.rotation, this.nextRotation);
+        }
+        
+        public Quaternionf calculateQuaternion(final float deltaTime)
+        {
+            final Vec3i normal = this.direction.getUnitVec3i();
+            final float angle  = this.calculateAngle(deltaTime);
+            return new Quaternionf(new AxisAngle4f(angle, normal.getZ(), 0, (normal.getX() * -1)));
+        }
+        
+        //==============================================================================================================
+        public void updateRotation(final int tick)
+        {
+            if (this.rotation == 0f && tick > 0)
+            {
+                this.rotation = FallingObjectEntity.calculateTilt(tick);
+            }
+            else
+            {
+                this.rotation = this.nextRotation;
+            }
+            
+            this.nextRotation = FallingObjectEntity.calculateTilt(tick + 1);
+        }
     }
     
     //******************************************************************************************************************
@@ -240,7 +294,7 @@ public class FallingObjectEntity
         {
             int tilt = this.entityData.get(FallingObjectEntity.DATA_TILT);
             
-            if (tilt < 1 && this.fallTime <= 10 && this.effect != null)
+            if (tilt < 1 && this.effect != null)
             {
                 this.playSound(this.effect, 0.3f, 1.0f);
             }
@@ -264,8 +318,7 @@ public class FallingObjectEntity
         this.renderState.motion    = this.motionVec;
         this.renderState.direction = this.entityData.get(FallingObjectEntity.DATA_FALL_DIR);
         
-        final int tilt_progress = this.entityData.get(FallingObjectEntity.DATA_TILT);
-        this.renderState.rotation = FallingObjectEntity.calculateTilt(tilt_progress);
+        this.renderState.updateRotation(this.entityData.get(FallingObjectEntity.DATA_TILT));
     }
     
     //==================================================================================================================

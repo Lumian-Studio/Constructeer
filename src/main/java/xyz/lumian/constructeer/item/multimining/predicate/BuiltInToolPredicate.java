@@ -1,6 +1,29 @@
+/// MIT License
+///
+/// Copyright (c) 2026 Lumian Studio
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to deal
+/// in the Software without restriction, including without limitation the rights
+/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+/// copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in all
+/// copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+/// SOFTWARE.
 package xyz.lumian.constructeer.item.multimining.predicate;
 
 import com.google.common.collect.ImmutableList;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Function5;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -8,7 +31,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.Block;
 import xyz.lumian.constructeer.ConstructeerMain;
 import xyz.lumian.constructeer.ModDefine;
-import xyz.lumian.constructeer.config.ModServerConfig;
+import xyz.lumian.constructeer.config.ConfigHelper;
+import xyz.lumian.constructeer.config.ToolConfig;
 import xyz.lumian.constructeer.item.multimining.SneakMode;
 import xyz.lumian.constructeer.registry.RegistryId;
 
@@ -35,15 +59,8 @@ public interface BuiltInToolPredicate
         //==============================================================================================================
         static
         {
-            ConstructeerMain.addServerReloadListener(config -> INSTANCE.set(new HammerType(
-                BuiltInToolPredicate.IncludeList.of(config.hammerIncludes().get().stream()
-                    .map(ModServerConfig.BlockPredicate::of)),
-                ModServerConfig.resolveIDs(config.hammerExcludes().get().stream()
-                    .map(str -> RegistryId.parse(Registries.BLOCK, str))),
-                ModServerConfig.resolveIDs(config.hammerIgnored().get().stream()
-                    .map(str -> RegistryId.parse(Registries.BLOCK, str))),
-                config.hammerSneakMode()    .get(),
-                config.hammerCheckHardness().get())));
+            ConstructeerMain.addServerReloadListener(config ->
+                HammerType.INSTANCE.setPlain(BuiltInToolPredicate.updateToolConfig(config.hammer(), HammerType::new)));
         }
         
         //**************************************************************************************************************
@@ -72,15 +89,8 @@ public interface BuiltInToolPredicate
         //==============================================================================================================
         static
         {
-            ConstructeerMain.addServerReloadListener(config -> INSTANCE.set(new PlowType(
-                BuiltInToolPredicate.IncludeList.of(config.plowIncludes().get().stream()
-                    .map(ModServerConfig.BlockPredicate::of)),
-                ModServerConfig.resolveIDs(config.plowExcludes().get().stream()
-                    .map(str -> RegistryId.parse(Registries.BLOCK, str))),
-                ModServerConfig.resolveIDs(config.plowIgnored().get().stream()
-                    .map(str -> RegistryId.parse(Registries.BLOCK, str))),
-                config.plowSneakMode()    .get(),
-                config.plowCheckHardness().get())));
+            ConstructeerMain.addServerReloadListener(config ->
+                PlowType.INSTANCE.setPlain(BuiltInToolPredicate.updateToolConfig(config.plow(), PlowType::new)));
         }
         
         //**************************************************************************************************************
@@ -98,14 +108,20 @@ public interface BuiltInToolPredicate
         }
     }
     
+    record BlockPredicate(Either<RegistryId<Block>, ImmutableList<RegistryId<Block>>> entry)
+    {
+        //**************************************************************************************************************
+        public boolean isGroup() { return this.entry.map(RegistryId::isTag, (l -> true)); }
+    }
+    
     record IncludeList(HolderSet<Block> blocks, ImmutableList<HolderSet<Block>> groups)
     {
         //**************************************************************************************************************
-        public static IncludeList of(final Stream<ModServerConfig.BlockPredicate> includeList)
+        public static IncludeList of(final Stream<BlockPredicate> includeList)
         {
-            final Registry<Block>                                    registry   = BuiltInRegistries.BLOCK;
-            final Map<Boolean, List<ModServerConfig.BlockPredicate>> predicates = includeList
-                .collect(Collectors.partitioningBy(ModServerConfig.BlockPredicate::isGroup));
+            final Registry<Block>                    registry   = BuiltInRegistries.BLOCK;
+            final Map<Boolean, List<BlockPredicate>> predicates = includeList
+                .collect(Collectors.partitioningBy(BlockPredicate::isGroup));
             return new IncludeList(
                 HolderSet.direct(predicates.get(false).stream()
                     .flatMap(pred ->
@@ -151,6 +167,23 @@ public interface BuiltInToolPredicate
                     .collect(ImmutableList.toImmutableList())
             );
         }
+    }
+    
+    //******************************************************************************************************************
+    private static <T extends BuiltInToolPredicate> T updateToolConfig(
+        final ToolConfig                                                                        config,
+        final Function5<IncludeList, HolderSet<Block>, HolderSet<Block>, SneakMode, Boolean, T> generator
+    )
+    {
+        return generator.apply(
+            BuiltInToolPredicate.IncludeList.of(config.includes().get().stream()
+                .map(ConfigHelper::resolveBlockPredicate)),
+            ConfigHelper.resolveIDs(config.excludes().get().stream()
+                .map(str -> RegistryId.parse(Registries.BLOCK, str))),
+            ConfigHelper.resolveIDs(config.ignored().get().stream()
+                .map(str -> RegistryId.parse(Registries.BLOCK, str))),
+            config.sneakMode()    .get(),
+            config.checkHardness().get());
     }
     
     //******************************************************************************************************************

@@ -1,8 +1,29 @@
+/// MIT License
+///
+/// Copyright (c) 2026 Lumian Studio
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to deal
+/// in the Software without restriction, including without limitation the rights
+/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+/// copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in all
+/// copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+/// SOFTWARE.
 package xyz.lumian.constructeer.item.multimining;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -14,10 +35,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import xyz.lumian.constructeer.util.BlockContext;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 
@@ -78,42 +101,39 @@ public record MultiMiningBox(List<Part> parts, Vec3 base, int baseWidth, int bas
     //******************************************************************************************************************
     public static MultiMiningBox create(final Collection<BlockContext>                blocks,
                                         final Function<BlockContext, List<ItemStack>> dropCollector,
-                                        final BlockContext                            startBlock)
+                                        final BlockContext                            startBlock,
+                                        final Optional<HolderSet<Block>>              validBaseBlocks)
     {
-        int min_y      = Integer.MAX_VALUE;
+        final List<Part> parts = blocks.stream()
+            .map(block -> new Part(block.state(), block.pos().subtract(startBlock.pos()), dropCollector.apply(block)))
+            .sorted(Comparator.comparingInt(part -> part.offset.getY()))
+            .collect(Collectors.toList());
+        
         int base_min_x = Integer.MAX_VALUE;
         int base_min_z = Integer.MAX_VALUE;
         int base_max_x = Integer.MIN_VALUE;
         int base_max_z = Integer.MIN_VALUE;
+        int min_y      = Integer.MAX_VALUE;
         
-        final List<Part> parts = new ArrayList<>(blocks.size());
-        
-        for (final var block : blocks)
+        for (final var part : parts)
         {
-            final BlockPos pos   = block.pos();
-            final int      old_y = min_y;
-            
-            min_y = Math.min(min_y, pos.getY());
-            
-            if (min_y < old_y)
+            if (part.offset.getY() > min_y)
             {
-                base_max_x = base_min_x = pos.getX();
-                base_max_z = base_min_z = pos.getZ();
-            }
-            else if (min_y == pos.getY())
-            {
-                base_min_x = Math.min(base_min_x, pos.getX());
-                base_min_z = Math.min(base_min_z, pos.getZ());
-                base_max_x = Math.max(base_max_x, pos.getX());
-                base_max_z = Math.max(base_max_z, pos.getZ());
+                break;
             }
             
-            parts.add(new Part(block.state(), pos.subtract(startBlock.pos()), dropCollector.apply(block)));
+            if (validBaseBlocks.map(part.state::is).orElse(true))
+            {
+                min_y      = part.offset.getY();
+                base_min_x = Math.min(base_min_x, part.offset.getX());
+                base_min_z = Math.min(base_min_z, part.offset.getZ());
+                base_max_x = Math.max(base_max_x, part.offset.getX());
+                base_max_z = Math.max(base_max_z, part.offset.getZ());
+            }
         }
         
         final AABB base = new AABB(base_min_x, min_y, base_min_z, (base_max_x + 1), (min_y + 1), (base_max_z + 1));
-        return new MultiMiningBox(parts, base.getBottomCenter().subtract(new Vec3(startBlock.pos())),
-                                  (int) base.getXsize(), (int) base.getZsize());
+        return new MultiMiningBox(parts, base.getBottomCenter(), (int) base.getXsize(), (int) base.getZsize());
     }
     
     //******************************************************************************************************************

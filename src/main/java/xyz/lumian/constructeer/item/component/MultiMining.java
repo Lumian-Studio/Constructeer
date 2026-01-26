@@ -1,3 +1,24 @@
+/// MIT License
+///
+/// Copyright (c) 2026 Lumian Studio
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to deal
+/// in the Software without restriction, including without limitation the rights
+/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+/// copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in all
+/// copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+/// SOFTWARE.
 package xyz.lumian.constructeer.item.component;
 
 import com.google.common.collect.ImmutableSet;
@@ -31,6 +52,7 @@ import xyz.lumian.constructeer.config.ModServerConfig;
 import xyz.lumian.constructeer.enchantment.ModEnchantments;
 import xyz.lumian.constructeer.entity.player.PlayerAttachments;
 import xyz.lumian.constructeer.item.multimining.area.IAreaProvider;
+import xyz.lumian.constructeer.item.multimining.damage.IMultiMiningDamageType;
 import xyz.lumian.constructeer.item.multimining.timber.IJustinTimbermode;
 import xyz.lumian.constructeer.registry.ModRegistries;
 import xyz.lumian.constructeer.util.BlockContext;
@@ -42,11 +64,12 @@ import java.util.*;
 
 //**********************************************************************************************************************
 public record MultiMining(
-    IAreaProvider             areaProvider,
-    Optional<Identifier>      useStat,
-    Holder<IJustinTimbermode> timberMode,
-    int                       outlineRenderColour,
-    ImmutableSet<MiningFlag>  miningFlags
+    IAreaProvider                  areaProvider,
+    Optional<Identifier>           useStat,
+    Holder<IJustinTimbermode>      timberMode,
+    int                            outlineRenderColour,
+    ImmutableSet<MiningFlag>       miningFlags,
+    Holder<IMultiMiningDamageType> damageType
 )
 {
     //******************************************************************************************************************
@@ -55,7 +78,7 @@ public record MultiMining(
     {
         ANGER_PIGLINS(true),
         SEND_VIBRATIONS(true),
-        AWARD_USE_STATE(true),
+        AWARD_USE_STAT(true),
         CALL_MINED(true),
         SHOULD_DROP_ITEMS(true),
         ;
@@ -160,7 +183,7 @@ public record MultiMining(
             BuiltInRegistries.CUSTOM_STAT.byNameCodec()
                 .optionalFieldOf("useStatId")
                 .forGetter(MultiMining::useStat),
-            ModRegistries.BuiltIn.TIMBER_MODE.holderByNameCodec()
+            ModRegistries.BuiltIn.MULTI_MINING_TIMBER_MODE.holderByNameCodec()
                 .fieldOf("timberMode")
                 .forGetter(MultiMining::timberMode),
             Codec.INT
@@ -170,15 +193,19 @@ public record MultiMining(
                 .fieldOf("miningFlags")
                 .orElseGet(() -> EnumSet.copyOf(MiningFlag.DEFAULT_FLAGS))
                 .xmap(ImmutableSet::copyOf, EnumSet::copyOf)
-                .forGetter(MultiMining::miningFlags))
+                .forGetter(MultiMining::miningFlags),
+            ModRegistries.BuiltIn.MULTI_MINING_DAMAGE_TYPE.holderByNameCodec()
+                .fieldOf("damageType")
+                .forGetter(MultiMining::damageType))
         .apply(instance, MultiMining::new));
     
     public static final StreamCodec<RegistryFriendlyByteBuf, MultiMining> STREAM_CODEC = StreamCodec.composite(
         IAreaProvider.STREAM_CODEC,                                             MultiMining::areaProvider,
         ByteBufCodecs.optional(Identifier.STREAM_CODEC),                        MultiMining::useStat,
-        ByteBufCodecs.holderRegistry(ModRegistries.TIMBER_MODE),                MultiMining::timberMode,
+        ByteBufCodecs.holderRegistry(ModRegistries.MULTI_MINING_TIMBER_MODE),   MultiMining::timberMode,
         ByteBufCodecs.VAR_INT,                                                  MultiMining::outlineRenderColour,
         MiningFlag.SET_STREAM_CODEC.map(ImmutableSet::copyOf, EnumSet::copyOf), MultiMining::miningFlags,
+        ByteBufCodecs.holderRegistry(ModRegistries.MULTI_MINING_DAMAGE_TYPE),   MultiMining::damageType,
         MultiMining::new);
     
     //******************************************************************************************************************
@@ -208,13 +235,15 @@ public record MultiMining(
     
     //******************************************************************************************************************
     public MultiMining(
-        final           IAreaProvider             areaProvider,
-        final @Nullable Identifier                useStat,
-        final           Holder<IJustinTimbermode> timberMode,
-        final           int                       outlineRenderColour
+        final           IAreaProvider                  areaProvider,
+        final @Nullable Identifier                     useStat,
+        final           Holder<IJustinTimbermode>      timberMode,
+        final           int                            outlineRenderColour,
+        final           Holder<IMultiMiningDamageType> damageType
     )
     {
-        this(areaProvider, Optional.ofNullable(useStat), timberMode, outlineRenderColour, MiningFlag.DEFAULT_FLAGS);
+        this(areaProvider, Optional.ofNullable(useStat), timberMode, outlineRenderColour, MiningFlag.DEFAULT_FLAGS,
+             damageType);
     }
     
     //==================================================================================================================
@@ -238,6 +267,7 @@ public record MultiMining(
         return this.mine(face, player, stack, block, EnumSet.of(flag, moreFlags));
     }
     
+    @SemanticContract.Server
     public boolean mine(final Direction face, final Player player, final ItemStack stack, final BlockContext block,
                         final Set<MiningFlag> flags)
     {
@@ -270,40 +300,53 @@ public record MultiMining(
             return true;
         }
         
+        final boolean do_drops = (!player.preventsBlockDrops() && flags.contains(MiningFlag.SHOULD_DROP_ITEMS));
+        
+        final IJustinTimbermode mode = this.timberMode.value();
+        
+        if (!mode.cryMeARiver(face, player, stack, block, blocks, do_drops))
+        {
+            return true;
+        }
+        
         /// VOLATILE [net.minecraft.server.level.ServerPlayerGameMode#destroyBlock(BlockPos)]
         if (flags.contains(MiningFlag.SEND_VIBRATIONS))
         {
             level.gameEvent(GameEvent.BLOCK_DESTROY, block.pos(), GameEvent.Context.of(player, block.state()));
         }
         
-        if (flags.contains(MiningFlag.ANGER_PIGLINS))
+        final boolean                notify_piglins = flags.contains(MiningFlag.ANGER_PIGLINS);
+        final boolean                call_mined     = (
+            flags.contains(MiningFlag.CALL_MINED)
+            && !player.preventsBlockDrops()
+        );
+        final IMultiMiningDamageType damage_type    = this.damageType.value();
+        
+        if (call_mined)
         {
-            for (final var to_destroy : blocks)
+            stack.mineBlock(level, block.state(), block.pos(), player);
+        }
+        
+        for (final var to_destroy : blocks)
+        {
+            if (notify_piglins && to_destroy.is(BlockTags.GUARDED_BY_PIGLINS))
             {
-                if (to_destroy.is(BlockTags.GUARDED_BY_PIGLINS))
+                PiglinAi.angerNearbyPiglins(level, player, false);
+                break;
+            }
+            
+            if (call_mined && !to_destroy.pos().equals(block.pos()))
+            {
+                if (damage_type.shouldDamage(to_destroy) && mode.shouldDamageStack(to_destroy))
                 {
-                    PiglinAi.angerNearbyPiglins(level, player, false);
-                    break;
+                    stack.mineBlock(level, to_destroy.state(), to_destroy.pos(), player);
                 }
             }
         }
         
-        final boolean do_drops = flags.contains(MiningFlag.SHOULD_DROP_ITEMS);
-        
-        if (
-            this.timberMode.value().cryMeARiver(face, player, stack, block, blocks, do_drops)
-            && !player.preventsBlockDrops()
-        )
+        if (!player.preventsBlockDrops() && flags.contains(MiningFlag.AWARD_USE_STAT))
         {
-            if (flags.contains(MiningFlag.CALL_MINED))
-            {
-                stack.mineBlock(level, block.state(), block.pos(), player);
-            }
-            
-            if (flags.contains(MiningFlag.AWARD_USE_STATE))
-            {
-                this.useStat().ifPresent(player::awardStat);
-            }
+            this.useStat().ifPresent(player::awardStat);
         }
         
         return false;

@@ -2,14 +2,5 @@
     "entity.falling_object.tree": {
         "subtitle": "sound.constructeer.tree_falling",
         "sounds": [ "constructeer:tree_falling" ]
-    },
-    "entity.player.sawing": {
-        "sounds": [
-            "constructeer:sawing_001",
-            "constructeer:sawing_002",
-            "constructeer:sawing_003",
-            "constructeer:sawing_004",
-            "constructeer:sawing_005"
-        ]
     }
 }
