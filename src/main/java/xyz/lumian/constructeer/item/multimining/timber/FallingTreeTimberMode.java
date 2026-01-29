@@ -21,67 +21,46 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.item.multimining.timber;
 
-import net.minecraft.core.Holder;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderSet;
-import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.Tool;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import xyz.lumian.constructeer.ConstructeerMain;
-import xyz.lumian.constructeer.ModDefine;
 import xyz.lumian.constructeer.config.ConfigHelper;
-import xyz.lumian.constructeer.registry.ModRegistries;
+import xyz.lumian.constructeer.item.multimining.MultiMiningBox;
 import xyz.lumian.constructeer.registry.RegistryId;
 import xyz.lumian.constructeer.sound.ModSoundEvents;
 import xyz.lumian.constructeer.util.BlockContext;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 
 
 //**********************************************************************************************************************
-public class BuiltInFallingTreeTimberMode
+public class FallingTreeTimberMode
     extends FallingTimberMode
 {
     //******************************************************************************************************************
-    public static final Holder<IJustinTimbermode> INSTANCE = Registry.registerForHolder(
-        ModRegistries.BuiltIn.MULTI_MINING_TIMBER_MODE,
-        ModDefine.id("falling_tree"),
-        new BuiltInFallingTreeTimberMode());
-    
-    //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //******************************************************************************************************************
-    private final AtomicReference<HolderSet<Block>> validStemBlocks = new AtomicReference<>(HolderSet.empty());
-    
-    //******************************************************************************************************************
-    BuiltInFallingTreeTimberMode()
+    protected MultiMiningBox createMultiMiningBox(final Direction face, final Player player, final ItemStack stack,
+                                                  final BlockContext mainBlock, final List<BlockContext> blocks,
+                                                  final Function<BlockContext, List<ItemStack>> dropsCollector)
     {
-        ConstructeerMain.addServerReloadListener(config -> this.validStemBlocks.setPlain(
-            ConfigHelper.resolveIDs(config.saw().validStemBlocks().get().stream()
-                .map(str -> RegistryId.parse(Registries.BLOCK, str)))));
+        final Predicate<BlockState> base_predicate = (state -> state.getBlock() == mainBlock.state().getBlock());
+        return MultiMiningBox.create(blocks, dropsCollector, mainBlock, base_predicate);
     }
     
-    //==================================================================================================================
     @Override
     protected SoundEvent getSoundEffect(final Player player, final ItemStack stack)
     {
         return ModSoundEvents.TREE_FALLING;
-    }
-    
-    @Override
-    protected Optional<HolderSet<Block>> getValidBaseBlocks()
-    {
-        return Optional.of(this.validStemBlocks.getPlain());
-    }
-    
-    @Override
-    public boolean shouldDamageStack(final BlockContext block)
-    {
-        return block.is(this.validStemBlocks.getPlain());
     }
 }

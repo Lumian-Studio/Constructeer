@@ -22,7 +22,6 @@
 package xyz.lumian.constructeer.item.multimining.timber;
 
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
@@ -31,7 +30,6 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.Tool;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.entity.FallingObjectEntity;
@@ -40,7 +38,6 @@ import xyz.lumian.constructeer.item.multimining.MultiMiningBox;
 import xyz.lumian.constructeer.util.BlockContext;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 
@@ -54,10 +51,8 @@ public class FallingTimberMode
                                                   final BlockContext mainBlock, final List<BlockContext> blocks,
                                                   final Function<BlockContext, List<ItemStack>> dropsCollector)
     {
-        return MultiMiningBox.create(blocks, dropsCollector, mainBlock, this.getValidBaseBlocks());
+        return MultiMiningBox.create(blocks, dropsCollector, mainBlock, (state -> true));
     }
-    
-    protected Optional<HolderSet<Block>> getValidBaseBlocks() { return Optional.empty(); }
     
     protected @Nullable SoundEvent getSoundEffect(final Player player, final ItemStack stack) { return null; }
     

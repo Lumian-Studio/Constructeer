@@ -31,7 +31,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.Block;
 import xyz.lumian.constructeer.ModDefine;
-import xyz.lumian.constructeer.item.multimining.predicate.BuiltInToolPredicate;
+import xyz.lumian.constructeer.item.multimining.predicate.ToolPredicate;
 import xyz.lumian.constructeer.registry.RegistryId;
 
 import java.util.List;
@@ -67,9 +67,9 @@ public final class ConfigHelper
             .toList());
     }
     
-    public static BuiltInToolPredicate.BlockPredicate resolveBlockPredicate(final Object object)
+    public static ToolPredicate.BlockPredicate resolveBlockPredicate(final Object object)
     {
-        return new BuiltInToolPredicate.BlockPredicate(switch (object)
+        return new ToolPredicate.BlockPredicate(switch (object)
         {
             case List<?> list -> Either.right(list.stream()
                 .map(str -> RegistryId.parse(Registries.BLOCK, (String) str))

@@ -21,23 +21,23 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.item.multimining.area;
 
-import com.mojang.serialization.MapCodec;
-import xyz.lumian.constructeer.item.multimining.predicate.IMultiMiningPredicate;
-import xyz.lumian.constructeer.item.multimining.predicate.MultiMiningPredicateType;
-import xyz.lumian.constructeer.registry.ModRegistries;
+import com.mojang.serialization.Codec;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import xyz.lumian.constructeer.item.multimining.predicate.ToolPredicate;
 
 
 
 //**********************************************************************************************************************
-public record ToolProvider(IMultiMiningPredicate predicate)
+public record ToolProvider(ToolPredicate predicate)
     implements IToolProvider
 {
     //******************************************************************************************************************
-    public static final MapCodec<ToolProvider> MAP_CODEC = ModRegistries.BuiltIn.MULTI_MINING_PREDICATE_TYPE
-        .byNameCodec()
-        .<IMultiMiningPredicate>dispatch(IMultiMiningPredicate::type, MultiMiningPredicateType::codec)
-        .xmap(ToolProvider::new, ToolProvider::predicate)
-        .fieldOf("predicate");
+    public static final Codec<ToolProvider> CODEC = ToolPredicate.CODEC
+        .xmap(ToolProvider::new, ToolProvider::predicate);
+    
+    public static final StreamCodec<RegistryFriendlyByteBuf, ToolProvider> STREAM_CODEC = ToolPredicate.STREAM_CODEC
+        .map(ToolProvider::new, ToolProvider::predicate);
     
     //******************************************************************************************************************
     @Override public AreaProviderType<? extends IAreaProvider> type() { return AreaProviderType.TOOL; }

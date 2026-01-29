@@ -21,11 +21,16 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.config;
 
+import net.minecraft.tags.BlockTags;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.ModConfigSpec.*;
 import org.apache.commons.lang3.tuple.Pair;
+import xyz.lumian.constructeer.item.multimining.SneakMode;
+import xyz.lumian.constructeer.item.multimining.damage.DamageType;
+import xyz.lumian.constructeer.item.multimining.timber.TimberMode;
 import xyz.lumian.constructeer.tag.ModItemTags;
 
+import java.util.Collections;
 import java.util.List;
 
 
@@ -68,8 +73,14 @@ public record ModServerConfig(
                 .worldRestart()
                 .defineInRange("multiMining.hardLimit", 1000, 0, Integer.MAX_VALUE),
             
-            new ToolConfig("hammer", builder),
-            new ToolConfig("plow",   builder),
+            new ToolConfig(
+                "hammer", builder, true,
+                Collections.singletonList("#" + BlockTags.BASE_STONE_OVERWORLD.location()),
+                List.of(), List.of(), TimberMode.INSTANT, SneakMode.WEAK, DamageType.SINGLE),
+            new ToolConfig(
+                "plow", builder, true,
+                List.of(("#" + BlockTags.SNOW.location()), ("#" + BlockTags.DIRT.location())),
+                List.of(), List.of(), TimberMode.INSTANT, SneakMode.WEAK, DamageType.SINGLE),
             new SawConfig(builder)
         );
     }

@@ -43,13 +43,14 @@ public enum TimberMode
     
     /// Blocks will tilt in the opposite block face direction and "die".
     FALLING("falling", new FallingTimberMode()),
+    
+    /// Same as [#FALLING] but plays a "falling tree" sound effect and tilts only around blocks that are the same
+    /// as the actively mined block.
+    FALLING_TREE("falling_tree", new FallingTreeTimberMode()),
     ;
     
     //******************************************************************************************************************
-    public static void initialise()
-    {
-        BuiltInTimberMode.initialise();
-    }
+    public static void initialise() {}
     
     //******************************************************************************************************************
     private final IJustinTimbermode         mode;

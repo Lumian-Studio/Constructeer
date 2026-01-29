@@ -21,11 +21,7 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.item.multimining.damage;
 
-import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
-import xyz.lumian.constructeer.ModDefine;
-import xyz.lumian.constructeer.registry.ModRegistries;
+import net.minecraft.world.item.ItemStack;
 import xyz.lumian.constructeer.util.BlockContext;
 
 
@@ -34,18 +30,5 @@ import xyz.lumian.constructeer.util.BlockContext;
 public interface IMultiMiningDamageType
 {
     //******************************************************************************************************************
-	Holder<IMultiMiningDamageType> SINGLE = register(ModDefine.id("single"), DamageTypes.SINGLE);
-	Holder<IMultiMiningDamageType> ALL    = register(ModDefine.id("all"),    DamageTypes.ALL);
-    
-    //******************************************************************************************************************
-    static void initialise() {}
-    
-    //==================================================================================================================
-    static <T extends IMultiMiningDamageType> Holder<T> register(final Identifier id, final T type)
-    {
-        return Registry.registerForHolder(ModRegistries.BuiltIn.MULTI_MINING_DAMAGE_TYPE, id, type);
-    }
-    
-    //******************************************************************************************************************
-    boolean shouldDamage(BlockContext block);
+    boolean shouldDamage(ItemStack tool, BlockContext block);
 }

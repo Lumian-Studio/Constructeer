@@ -46,7 +46,17 @@ public class BlockContext
         return new BlockContext(level, level.getBlockState(pos), pos);
     }
     
+    public static BlockContext forLevel(final Level level, final BlockPos.MutableBlockPos pos)
+    {
+        return new BlockContext(level, level.getBlockState(pos), pos);
+    }
+    
     public static BlockContext forPlayer(final Player player, final BlockPos pos)
+    {
+        return BlockContext.forLevel(player.level(), pos);
+    }
+    
+    public static BlockContext forPlayer(final Player player, final BlockPos.MutableBlockPos pos)
     {
         return BlockContext.forLevel(player.level(), pos);
     }
@@ -61,6 +71,13 @@ public class BlockContext
     {
         this.level  = Objects.requireNonNull(level, "level must not be null");
         this.pos    = Objects.requireNonNull(pos,   "pos must not be null");
+        this.state  = Objects.requireNonNull(state, "state must not be null");
+    }
+    
+    public BlockContext(final Level level, final BlockState state, final BlockPos.MutableBlockPos pos)
+    {
+        this.level  = Objects.requireNonNull(level, "level must not be null");
+        this.pos    = Objects.requireNonNull(pos,   "pos must not be null").immutable();
         this.state  = Objects.requireNonNull(state, "state must not be null");
     }
     
@@ -106,6 +123,16 @@ public class BlockContext
         }
         
         return BlockContext.forLevel(this.level, this.pos.offset(offset));
+    }
+    
+    public BlockContext withPos(final BlockPos.MutableBlockPos newPos)
+    {
+        if (newPos.equals(this.pos))
+        {
+            return this;
+        }
+        
+        return BlockContext.forLevel(this.level, newPos);
     }
     
     public BlockContext withPos(final BlockPos newPos)

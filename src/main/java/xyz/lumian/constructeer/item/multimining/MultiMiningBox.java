@@ -23,7 +23,6 @@ package xyz.lumian.constructeer.item.multimining;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.HolderSet;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -38,8 +37,8 @@ import xyz.lumian.constructeer.util.BlockContext;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 
@@ -102,7 +101,7 @@ public record MultiMiningBox(List<Part> parts, Vec3 base, int baseWidth, int bas
     public static MultiMiningBox create(final Collection<BlockContext>                blocks,
                                         final Function<BlockContext, List<ItemStack>> dropCollector,
                                         final BlockContext                            startBlock,
-                                        final Optional<HolderSet<Block>>              validBaseBlocks)
+                                        final Predicate<BlockState>                   validBaseBlockPredicate)
     {
         final List<Part> parts = blocks.stream()
             .map(block -> new Part(block.state(), block.pos().subtract(startBlock.pos()), dropCollector.apply(block)))
@@ -122,7 +121,7 @@ public record MultiMiningBox(List<Part> parts, Vec3 base, int baseWidth, int bas
                 break;
             }
             
-            if (validBaseBlocks.map(part.state::is).orElse(true))
+            if (validBaseBlockPredicate.test(part.state))
             {
                 min_y      = part.offset.getY();
                 base_min_x = Math.min(base_min_x, part.offset.getX());

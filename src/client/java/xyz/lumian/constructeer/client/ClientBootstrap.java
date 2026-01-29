@@ -26,9 +26,6 @@ import xyz.lumian.constructeer.client.integration.ClientCompat;
 import xyz.lumian.constructeer.client.model.ModModelLayers;
 import xyz.lumian.constructeer.client.network.ModClientPayloadReceiver;
 import xyz.lumian.constructeer.client.renderer.ModRenderer;
-import xyz.lumian.constructeer.client.renderer.item.conditional.ModConditionalItemModelProperties;
-import xyz.lumian.constructeer.client.renderer.item.conditional.predicate.MenuPredicates;
-import xyz.lumian.constructeer.item.component.MultiMining;
 
 
 

@@ -45,6 +45,10 @@ public class ModDefine
     public static final String MINECRAFT_VERSION = ModAutoDefine.MC_VERSION;
     
     //==================================================================================================================
+    /// After how many ticks should the multi mining outline renderer clear the rendering cache.
+    public static final int MULTI_MINING_OUTLINE_RENDERER_UPDATE_TICKS = 5;
+    
+    //==================================================================================================================
     /// The main logging instance for this mod.
     public static final Logger LOGGER = LoggerFactory.getLogger(ModDefine.MOD_ID);
     

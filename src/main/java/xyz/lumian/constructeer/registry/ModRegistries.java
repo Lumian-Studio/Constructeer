@@ -29,10 +29,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.ModDefine;
+import xyz.lumian.constructeer.item.multimining.MultiMining;
+import xyz.lumian.constructeer.item.multimining.MultiMiningType;
 import xyz.lumian.constructeer.item.multimining.area.AreaProviderType;
-import xyz.lumian.constructeer.item.multimining.damage.IMultiMiningDamageType;
-import xyz.lumian.constructeer.item.multimining.predicate.MultiMiningPredicateType;
-import xyz.lumian.constructeer.item.multimining.predicate.ToolPredicate;
 import xyz.lumian.constructeer.item.multimining.timber.IJustinTimbermode;
 
 import java.util.Arrays;
@@ -52,14 +51,11 @@ public final class ModRegistries
         public static final Registry<AreaProviderType<?>> AREA_PROVIDER_TYPE
             = registerOptional(ModRegistries.AREA_PROVIDER_TYPE, null);
         
-        public static final Registry<MultiMiningPredicateType<?>> MULTI_MINING_PREDICATE_TYPE
-            = registerSynced(ModRegistries.MULTI_MINING_PREDICATE_TYPE, null);
-        
         public static final Registry<IJustinTimbermode> MULTI_MINING_TIMBER_MODE
             = registerSynced(ModRegistries.MULTI_MINING_TIMBER_MODE, null);
         
-        public static final Registry<IMultiMiningDamageType> MULTI_MINING_DAMAGE_TYPE
-            = register(ModRegistries.MULTI_MINING_DAMAGE_TYPE, ModDefine.id("single"));
+        public static final Registry<MultiMiningType<?>> MULTI_MINING_TYPE
+            = registerSynced(ModRegistries.MULTI_MINING_TYPE, null);
         
         //**************************************************************************************************************
         private static <T> Registry<T> registerOptional(final           ResourceKey<Registry<T>> key,
@@ -94,8 +90,7 @@ public final class ModRegistries
         //**************************************************************************************************************
         public static void initialise()
         {
-            // Dynamic registries
-            DynamicRegistries.registerSynced(ModRegistries.TOOL_PREDICATE, ToolPredicate.CODEC);
+            DynamicRegistries.registerSynced(ModRegistries.MULTI_MINING_PROVIDER, MultiMining.MAP_CODEC.codec());
         }
         
         //**************************************************************************************************************
@@ -104,21 +99,18 @@ public final class ModRegistries
     
     //******************************************************************************************************************
     // Dynamic registry keys
-    public static final ResourceKey<Registry<ToolPredicate>> TOOL_PREDICATE
-        = createKey("tool_predicate");
+    public static final ResourceKey<Registry<MultiMining>> MULTI_MINING_PROVIDER
+        = createKey("multi_mining_provider");
     
     // Static registry keys
     public static final ResourceKey<Registry<AreaProviderType<?>>> AREA_PROVIDER_TYPE
         = createKey("area_provider_type");
     
-    public static final ResourceKey<Registry<MultiMiningPredicateType<?>>> MULTI_MINING_PREDICATE_TYPE
-        = createKey("multi_mining_predicate_type");
-    
     public static final ResourceKey<Registry<IJustinTimbermode>> MULTI_MINING_TIMBER_MODE
         = createKey("multi_mining_timber_mode");
     
-    public static final ResourceKey<Registry<IMultiMiningDamageType>> MULTI_MINING_DAMAGE_TYPE
-        = createKey("multi_mining_damage_type");
+    public static final ResourceKey<Registry<MultiMiningType<?>>> MULTI_MINING_TYPE
+        = createKey("multi_mining_type");
     
     //******************************************************************************************************************
     private static <T> ResourceKey<Registry<T>> createKey(final String name)

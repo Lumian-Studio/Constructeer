@@ -19,50 +19,31 @@
 /// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 /// SOFTWARE.
-package xyz.lumian.constructeer.item.multimining.predicate;
+package xyz.lumian.constructeer.item.multimining.damage;
 
-import com.mojang.serialization.MapCodec;
-import net.minecraft.core.Holder;
-import net.minecraft.resources.RegistryFileCodec;
-import net.minecraft.world.entity.player.Player;
+import com.mojang.serialization.Codec;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
-import xyz.lumian.constructeer.registry.ModRegistries;
 import xyz.lumian.constructeer.util.BlockContext;
+
+import java.util.Locale;
 
 
 
 //**********************************************************************************************************************
-public class DynamicToolPredicate
-    implements IMultiMiningPredicate
+public enum DamageType
+    implements
+        IMultiMiningDamageType,
+        StringRepresentable
 {
-    //******************************************************************************************************************
-    public static final MapCodec<DynamicToolPredicate> MAP_CODEC = RegistryFileCodec
-        .create(ModRegistries.TOOL_PREDICATE, ToolPredicate.CODEC)
-        .xmap(DynamicToolPredicate::new, (dyn -> dyn.predicate))
-        .fieldOf("dataKey");
+    SINGLE { public boolean shouldDamage(final ItemStack tool, final BlockContext block) { return false; } },
+    ALL    { public boolean shouldDamage(final ItemStack tool, final BlockContext block) { return true;  } },
+    ;
     
     //******************************************************************************************************************
-    private final Holder<ToolPredicate> predicate;
+    public static final Codec<DamageType> CODEC = StringRepresentable
+        .fromEnumWithMapping(DamageType::values, (str -> str.toLowerCase(Locale.ROOT)));
     
     //******************************************************************************************************************
-    public DynamicToolPredicate(final Holder<ToolPredicate> predicate) { this.predicate = predicate; }
-    
-    //==================================================================================================================
-    @Override
-    public MultiMiningPredicateType<DynamicToolPredicate> type()
-    {
-        return MultiMiningPredicateType.DATA_TOOL;
-    }
-    
-    @Override
-    public boolean canExecute(final Player player, final BlockContext main, final ItemStack stack)
-    {
-        return this.predicate.value().canExecute(player, main, stack);
-    }
-    
-    @Override
-    public boolean test(final Player player, final BlockContext mainBlock, final BlockContext testBlock)
-    {
-        return this.predicate.value().test(player, mainBlock, testBlock);
-    }
+    @Override public String getSerializedName() { return this.name(); }
 }

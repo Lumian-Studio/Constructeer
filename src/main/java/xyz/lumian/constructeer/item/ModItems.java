@@ -42,17 +42,10 @@ import net.minecraft.world.item.equipment.Equippable;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.ModDefine;
 import xyz.lumian.constructeer.item.component.ModComponents;
-import xyz.lumian.constructeer.item.component.MultiMining;
+import xyz.lumian.constructeer.item.multimining.BuiltInMultiMining;
 import xyz.lumian.constructeer.item.component.PouchContent;
 import xyz.lumian.constructeer.item.component.ToolbeltStorage;
-import xyz.lumian.constructeer.item.component.predicate.ModComponentPredicates;
-import xyz.lumian.constructeer.item.multimining.area.BuiltInToolProvider;
-import xyz.lumian.constructeer.item.multimining.area.BuiltInTreeDetectionProvider;
-import xyz.lumian.constructeer.item.multimining.damage.BuiltInDamageType;
-import xyz.lumian.constructeer.item.multimining.timber.BuiltInTimberMode;
-import xyz.lumian.constructeer.item.multimining.timber.TimberMode;
 import xyz.lumian.constructeer.item.tab.ModTabs;
-import xyz.lumian.constructeer.stat.ModStats;
 import xyz.lumian.constructeer.util.FreezableMap;
 import xyz.lumian.constructeer.util.ItemFactory;
 
@@ -295,10 +288,7 @@ public final class ModItems
     {
         final Item item = ModItems.register((name + "_hammer"), Item::new, (new Item.Properties())
             .pickaxe(material, 1.0f, -2.8f)
-            .component(
-                ModComponents.MULTI_MINING,
-                new MultiMining(BuiltInToolProvider.HAMMER, ModStats.HAMMER_USED, BuiltInTimberMode.HAMMER, 0,
-                                BuiltInDamageType.BUILTIN_HAMMER)));
+            .component(ModComponents.MULTI_MINING, BuiltInMultiMining.HAMMER));
         ModItems.HAMMER_BY_MATERIAL.put(material, item);
         return item;
     }
@@ -307,10 +297,7 @@ public final class ModItems
     {
         final Item item = ModItems.register((name + "_plow"), Item::new, (new Item.Properties())
             .shovel(material, 1.5f, -3.0f)
-            .component(
-                ModComponents.MULTI_MINING,
-                new MultiMining(BuiltInToolProvider.PLOW, ModStats.PLOW_USED, BuiltInTimberMode.PLOW, 0,
-                                BuiltInDamageType.BUILTIN_PLOW)));
+            .component(ModComponents.MULTI_MINING, BuiltInMultiMining.PLOW));
         ModItems.PLOW_BY_MATERIAL.put(material, item);
         return item;
     }
@@ -320,10 +307,7 @@ public final class ModItems
     {
         final Item item = ModItems.register((name + "_saw"), Item::new, (new Item.Properties())
             .axe(material, attackDamage, attackSpeed)
-            .component(
-                ModComponents.MULTI_MINING,
-                new MultiMining(BuiltInTreeDetectionProvider.INSTANCE, ModStats.SAW_USED, BuiltInTimberMode.SAW, 0,
-                                BuiltInDamageType.BUILTIN_SAW)));
+            .component(ModComponents.MULTI_MINING, BuiltInMultiMining.SAW));
         ModItems.SAW_BY_MATERIAL.put(material, item);
         return item;
     }

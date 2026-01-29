@@ -38,13 +38,17 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
+import xyz.lumian.constructeer.ModDefine;
 import xyz.lumian.constructeer.client.config.ModClientConfig;
 import xyz.lumian.constructeer.item.component.ModComponents;
-import xyz.lumian.constructeer.item.component.MultiMining;
-import xyz.lumian.constructeer.tag.ModItemTags;
+import xyz.lumian.constructeer.item.multimining.IMultiMining;
+import xyz.lumian.constructeer.item.multimining.MultiMining;
+import xyz.lumian.constructeer.item.multimining.MultiMiningType;
 import xyz.lumian.constructeer.util.BlockContext;
+import xyz.lumian.constructeer.util.FreezableMap;
 
 import java.util.*;
+import java.util.function.IntSupplier;
 
 
 
@@ -54,32 +58,58 @@ enum MultiMiningOutlineRenderer
     INSTANCE;
     
     //******************************************************************************************************************
-    public static class MutableShape
+    public interface Renderer
     {
         //**************************************************************************************************************
-        private static VoxelShape makeBlock(final double x, final double y, final double z)
+        void addBlocks(BlockContext mainBlock, Collection<BlockContext> blocks);
+        
+        //==============================================================================================================
+        void render(final WorldRenderContext ctx, final BlockOutlineRenderState state);
+    }
+    
+    public static class ShapedRenderer
+        implements Renderer
+    {
+        //**************************************************************************************************************
+        public static VoxelShape makeBlock(final double x, final double y, final double z)
         {
             return Shapes.box(x, y, z, (x + 1), (y + 1), (z + 1));
         }
         
         //**************************************************************************************************************
-        private @Nullable VoxelShape   shape;
-        private @Nullable BlockContext block;
+        private @Nullable VoxelShape   shape = null;
+        private @Nullable BlockContext block = null;
         
         //**************************************************************************************************************
-        public boolean isDirty(final BlockContext newBlock, final Direction face)
+        public int getOutlineColourRGB() { return 0xFF000000; }
+        
+        //==============================================================================================================
+        @Override
+        public void addBlocks(final BlockContext mainBlock, final Collection<BlockContext> blocks)
         {
-            return (!newBlock.equals(this.block) || !this.block.is(newBlock.state()));
+            this.block = mainBlock;
+            
+            if (this.getOutlineColourRGB() == 0)
+            {
+                this.shape = null;
+                return;
+            }
+            
+            this.shape = Shapes.block();
+            
+            for (final var block : blocks)
+            {
+                final int x = (block.pos().getX() - mainBlock.pos().getX());
+                final int y = (block.pos().getY() - mainBlock.pos().getY());
+                final int z = (block.pos().getZ() - mainBlock.pos().getZ());
+                
+                this.shape = Shapes.joinUnoptimized(this.shape, ShapedRenderer.makeBlock(x, y, z), BooleanOp.OR);
+            }
         }
         
         //==============================================================================================================
-        public void setBlock(final BlockContext block)
-        {
-            this.block = Objects.requireNonNull(block);
-            this.shape = Shapes.block();
-        }
-        
-        public void addBlock(final BlockContext toRender)
+        @Override
+        public void render(final WorldRenderContext ctx, final BlockOutlineRenderState state)
         {
             if (this.shape == null)
             {
@@ -88,41 +118,86 @@ enum MultiMiningOutlineRenderer
             
             assert (this.block != null);
             
-            final int x = (toRender.pos().getX() - this.block.pos().getX());
-            final int y = (toRender.pos().getY() - this.block.pos().getY());
-            final int z = (toRender.pos().getZ() - this.block.pos().getZ());
-            
-            this.shape = Shapes.joinUnoptimized(this.shape, MutableShape.makeBlock(x, y, z), BooleanOp.OR);
+            final Vec3           cam_pos  = ctx.worldState().cameraRenderState.pos;
+            final double         draw_x   = (this.block.pos().getX() - cam_pos.x);
+            final double         draw_y   = (this.block.pos().getY() - cam_pos.y);
+            final double         draw_z   = (this.block.pos().getZ() - cam_pos.z);
+            final VertexConsumer vertices = ctx.consumers().getBuffer(RenderTypes.lines());
+            final int            colour   = ((this.getOutlineColourRGB() & 0xFFFFFF) | 0x55000000);
+            ShapeRenderer.renderShape(ctx.matrices(), vertices, this.shape, draw_x, draw_y, draw_z, colour, 3f);
+        }
+    }
+    
+    private final static class ConfigBackedShapedRenderer
+        extends ShapedRenderer
+    {
+        //**************************************************************************************************************
+        private final IntSupplier colourGetter;
+        
+        //**************************************************************************************************************
+        public ConfigBackedShapedRenderer(final IntSupplier colourGetter) { this.colourGetter = colourGetter; }
+        
+        //==============================================================================================================
+        @Override public int getOutlineColourRGB() { return this.colourGetter.getAsInt(); }
+    }
+    
+    private static class RenderState
+    {
+        //**************************************************************************************************************
+        private @Nullable Renderer     renderer;
+        private @Nullable BlockContext block;
+        
+        //**************************************************************************************************************
+        public boolean isDirty(final BlockContext newBlock)
+        {
+            return (!newBlock.equals(this.block) || !this.block.is(newBlock.state()));
+        }
+        
+        //==============================================================================================================
+        public void setBlock(final BlockContext block)
+        {
+            this.block    = Objects.requireNonNull(block);
+            this.renderer = null;
         }
         
         public void reset()
         {
-            this.shape = null;
-            this.block = null;
+            this.renderer = null;
+            this.block    = null;
         }
         
-        public void doNotRender() { this.shape = null; }
+        public void setRenderer(final @Nullable Renderer renderer) { this.renderer = renderer; }
         
         //==============================================================================================================
-        public void render(final WorldRenderContext ctx, final int rgb)
+        public void render(final WorldRenderContext ctx, final BlockOutlineRenderState state)
         {
-            if (this.shape != null)
+            if (this.renderer != null)
             {
-                assert (this.block != null);
-                
-                final Vec3           cam_pos  = ctx.worldState().cameraRenderState.pos;
-                final double         draw_x   = (this.block.pos().getX() - cam_pos.x);
-                final double         draw_y   = (this.block.pos().getY() - cam_pos.y);
-                final double         draw_z   = (this.block.pos().getZ() - cam_pos.z);
-                final VertexConsumer vertices = ctx.consumers().getBuffer(RenderTypes.lines());
-                final int            colour   = ((rgb & 0xFFFFFF) | 0x55000000);
-                ShapeRenderer.renderShape(ctx.matrices(), vertices, this.shape, draw_x, draw_y, draw_z, colour, 3f);
+                this.renderer.render(ctx, state);
             }
         }
     }
     
     //******************************************************************************************************************
-    private final MutableShape shape = new MutableShape();
+    public static final FreezableMap<MultiMiningType<?>, Renderer> RENDERERS
+        = new FreezableMap<>(new IdentityHashMap<>());
+    
+    //==================================================================================================================
+    static
+    {
+        RENDERERS.put(MultiMiningType.BUILTIN_HAMMER, new ConfigBackedShapedRenderer(
+            (() -> ModClientConfig.INSTANCE.shouldRenderHammerOutline().getAsBoolean()
+                ? (0xFF000000 | ModClientConfig.INSTANCE.hammerOutlineColour().getAsInt())
+                : 0)));
+        RENDERERS.put(MultiMiningType.BUILTIN_PLOW, new ConfigBackedShapedRenderer(
+            (() -> ModClientConfig.INSTANCE.shouldRenderPlowOutline().getAsBoolean()
+                ? (0xFF000000 | ModClientConfig.INSTANCE.plowOutlineColour().getAsInt())
+                : 0)));
+        RENDERERS.put(MultiMiningType.CUSTOM, new ShapedRenderer());
+    }
+    
+    //******************************************************************************************************************
+    private final RenderState state = new RenderState();
     
     private           int       ticks        = 0;
     private           boolean   initialised  = false;
@@ -144,6 +219,7 @@ enum MultiMiningOutlineRenderer
             return true;
         });
         
+        MultiMiningOutlineRenderer.RENDERERS.freeze();
         this.initialised = true;
     }
     
@@ -154,9 +230,9 @@ enum MultiMiningOutlineRenderer
         {
             ++this.ticks;
             
-            if ((this.ticks % 10) == 0)
+            if ((this.ticks % ModDefine.MULTI_MINING_OUTLINE_RENDERER_UPDATE_TICKS) == 0)
             {
-                this.shape.reset();
+                this.state.reset();
             }
         }
     }
@@ -171,67 +247,42 @@ enum MultiMiningOutlineRenderer
             return;
         }
         
-        final ItemStack   stack = player.getMainHandItem();
-        final MultiMining mm    = stack.get(ModComponents.MULTI_MINING);
+        final ItemStack    stack = player.getMainHandItem();
+        final IMultiMining mm    = stack.get(ModComponents.MULTI_MINING);
         
         if (mm == null)
         {
             return;
         }
         
-        final int rgb;
-        
-        if (stack.is(ModItemTags.HAMMERS))
-        {
-            if (!ModClientConfig.INSTANCE.shouldRenderHammerOutline().getAsBoolean())
-            {
-                return;
-            }
-            
-            rgb = ModClientConfig.INSTANCE.hammerOutlineColour().getAsInt();
-        }
-        else if (stack.is(ModItemTags.PLOWS))
-        {
-            if (!ModClientConfig.INSTANCE.shouldRenderPlowOutline().getAsBoolean())
-            {
-                return;
-            }
-            
-            rgb = ModClientConfig.INSTANCE.plowOutlineColour().getAsInt();
-        }
-        else if (mm.outlineRenderColour() != 0)
-        {
-            rgb = (0xFFFFFF & mm.outlineRenderColour());
-        }
-        else return;
-        
         final BlockContext block = BlockContext.forLevel(player.level(), state.pos());
         final Direction    face  = hit_result.getDirection();
         final boolean      sneak = player.isCrouching();
         
-        if (this.shape.isDirty(block, face) || this.prevFace != face || this.prevSneaking != sneak)
+        if (this.state.isDirty(block) || this.prevFace != face || this.prevSneaking != sneak)
         {
-            final MultiMining.Action action = mm.execute(face, player, stack, block);
-            
-            this.shape.setBlock(block);
+            this.state.setBlock(block);
             this.prevFace     = face;
             this.prevSneaking = sneak;
             
-            if (action.result() != MultiMining.Result.SUCCESS)
+            final Renderer renderer = MultiMiningOutlineRenderer.RENDERERS.get(mm.type());
+        
+            if (renderer == null)
             {
-                this.shape.doNotRender();
                 return;
             }
             
-            for (final var to_render : action.blocks())
+            final MultiMining.Action action = mm.execute(face, player, stack, block);
+            
+            if (action.result().shouldAbort)
             {
-                if (!to_render.equals(block))
-                {
-                    this.shape.addBlock(to_render);
-                }
+                return;
             }
+            
+            renderer.addBlocks(block, action.blocks());
+            this.state.setRenderer(renderer);
         }
         
-        this.shape.render(ctx, rgb);
+        this.state.render(ctx, state);
     }
 }

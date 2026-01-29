@@ -22,41 +22,130 @@
 package xyz.lumian.constructeer.item.multimining.predicate;
 
 import com.google.common.collect.ImmutableList;
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryCodecs;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.level.block.Block;
+import xyz.lumian.constructeer.ModDefine;
 import xyz.lumian.constructeer.item.multimining.SneakMode;
+import xyz.lumian.constructeer.registry.RegistryId;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 
 //**********************************************************************************************************************
 public record ToolPredicate(
-    HolderSet<Block>       alwaysIncluded,
-    List<HolderSet<Block>> includeGroups,
-    HolderSet<Block>       excluded,
-    HolderSet<Block>       ignored,
-    SneakMode              sneakMode,
-    boolean                shouldCheckHardness
+    IncludeList      included,
+    HolderSet<Block> excluded,
+    HolderSet<Block> ignored,
+    SneakMode        sneakMode,
+    boolean          shouldCheckHardness
 ) implements IToolPredicate
 {
     //******************************************************************************************************************
-    public static final MapCodec<ToolPredicate> MAP_CODEC = RecordCodecBuilder.mapCodec(inst -> inst
+    public record BlockPredicate(Either<RegistryId<Block>, ImmutableList<RegistryId<Block>>> entry)
+    {
+        //**************************************************************************************************************
+        public boolean isGroup() { return this.entry.map(RegistryId::isTag, (l -> true)); }
+    }
+    
+    public record IncludeList(HolderSet<Block> blocks, ImmutableList<HolderSet<Block>> groups)
+    {
+        //**************************************************************************************************************
+        public static final IncludeList EMPTY = new IncludeList(HolderSet.empty(), ImmutableList.of());
+        
+        public static final MapCodec<IncludeList> MAP_CODEC = RecordCodecBuilder.mapCodec(inst -> inst
+            .group(
+                RegistryCodecs.homogeneousList(Registries.BLOCK)
+                    .fieldOf("alwaysIncluded")
+                    .forGetter(IncludeList::blocks),
+                RegistryCodecs.homogeneousList(Registries.BLOCK).listOf()
+                    .fieldOf("includeGroups")
+                    .xmap(ImmutableList::copyOf, Function.identity())
+                    .forGetter(IncludeList::groups))
+            .apply(inst, IncludeList::new));
+        
+        public static final StreamCodec<RegistryFriendlyByteBuf, IncludeList> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.holderSet(Registries.BLOCK), IncludeList::blocks,
+            ByteBufCodecs.holderSet(Registries.BLOCK)
+                .apply(ByteBufCodecs.list())
+                .map(ImmutableList::copyOf, Function.identity()), IncludeList::groups,
+            IncludeList::new);
+        
+        //**************************************************************************************************************
+        public static IncludeList ofPredicates(final Stream<BlockPredicate> includeList)
+        {
+            final Registry<Block> registry = BuiltInRegistries.BLOCK;
+            final Map<Boolean, List<BlockPredicate>> predicates = includeList
+                .collect(Collectors.partitioningBy(BlockPredicate::isGroup));
+            return new IncludeList(
+                HolderSet.direct(predicates.get(false).stream()
+                    .flatMap(pred ->
+                    {
+                        final RegistryId<Block>       reg_id    = pred.entry().left().orElseThrow();
+                        final Optional<Holder<Block>> block_opt = reg_id.resolveSingleOptional(registry);
+                        
+                        if (block_opt.isEmpty())
+                        {
+                            ModDefine.LOGGER.warn("could not find any block with id '{}'", reg_id.asIdString());
+                            return Stream.empty();
+                        }
+                        
+                        return block_opt.stream();
+                    })
+                    .toList()),
+                predicates.get(true).stream()
+                    .flatMap(pred -> pred.entry().map(
+                        (reg_id ->
+                        {
+                            final Optional<HolderSet<Block>> blocks_opt = reg_id.resolveOptional(registry);
+                            
+                            if (blocks_opt.isEmpty())
+                            {
+                                ModDefine.LOGGER.warn("could not find any blocks for tag '{}'", reg_id.asIdString());
+                                return Stream.empty();
+                            }
+                            
+                            return blocks_opt.stream();
+                        }),
+                        (list -> list.stream().flatMap(reg_id ->
+                        {
+                            final Optional<HolderSet<Block>> block_opt = reg_id.resolveOptional(registry);
+                            
+                            if (block_opt.isEmpty())
+                            {
+                                ModDefine.LOGGER.warn("could not find any blocks for tag/id '{}'", reg_id.asIdString());
+                                return Stream.empty();
+                            }
+                            
+                            return block_opt.stream();
+                        }))))
+                    .collect(ImmutableList.toImmutableList())
+            );
+        }
+    }
+    
+    //******************************************************************************************************************
+    public static final Codec<ToolPredicate> CODEC = RecordCodecBuilder.create(inst -> inst
         .group(
-            RegistryCodecs.homogeneousList(Registries.BLOCK)
-                .optionalFieldOf("alwaysIncluded", HolderSet.empty())
-                .forGetter(ToolPredicate::alwaysIncluded),
-            RegistryCodecs.homogeneousList(Registries.BLOCK).listOf()
-                .optionalFieldOf("includeGroups", ImmutableList.of())
-                .forGetter(ToolPredicate::includeGroups),
+            IncludeList.MAP_CODEC
+                .forGetter(ToolPredicate::included),
             RegistryCodecs.homogeneousList(Registries.BLOCK)
                 .optionalFieldOf("excluded", HolderSet.empty())
                 .forGetter(ToolPredicate::excluded),
@@ -71,23 +160,18 @@ public record ToolPredicate(
                 .forGetter(ToolPredicate::shouldCheckHardness))
         .apply(inst, ToolPredicate::new));
     
-    public static final Codec<ToolPredicate> CODEC = MAP_CODEC.codec();
-    
     public static final StreamCodec<RegistryFriendlyByteBuf, ToolPredicate> STREAM_CODEC = StreamCodec.composite(
-        ByteBufCodecs.holderSet(Registries.BLOCK),                             ToolPredicate::alwaysIncluded,
-        ByteBufCodecs.holderSet(Registries.BLOCK).apply(ByteBufCodecs.list()), ToolPredicate::includeGroups,
-        ByteBufCodecs.holderSet(Registries.BLOCK),                             ToolPredicate::excluded,
-        ByteBufCodecs.holderSet(Registries.BLOCK),                             ToolPredicate::ignored,
-        SneakMode.STREAM_CODEC,                                                ToolPredicate::sneakMode,
-        ByteBufCodecs.BOOL,                                                    ToolPredicate::shouldCheckHardness,
+        IncludeList.STREAM_CODEC,                  ToolPredicate::included,
+        ByteBufCodecs.holderSet(Registries.BLOCK), ToolPredicate::excluded,
+        ByteBufCodecs.holderSet(Registries.BLOCK), ToolPredicate::ignored,
+        SneakMode.STREAM_CODEC,                    ToolPredicate::sneakMode,
+        ByteBufCodecs.BOOL,                        ToolPredicate::shouldCheckHardness,
         ToolPredicate::new);
     
     //******************************************************************************************************************
-    public ToolPredicate()
-    {
-        this(HolderSet.empty(), ImmutableList.of(), HolderSet.empty(), HolderSet.empty(), SneakMode.WEAK, true);
-    }
+    public ToolPredicate() { this(IncludeList.EMPTY, HolderSet.empty(), HolderSet.empty(), SneakMode.WEAK, true); }
     
     //==================================================================================================================
-    @Override public MultiMiningPredicateType<ToolPredicate> type() { return MultiMiningPredicateType.TOOL; }
+    @Override public HolderSet<Block>       alwaysIncluded() { return this.included.blocks(); }
+    @Override public List<HolderSet<Block>> includeGroups()  { return this.included.groups(); }
 }

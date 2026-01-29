@@ -22,15 +22,13 @@
 package xyz.lumian.constructeer.client.network;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationNetworking;
+import net.fabricmc.loader.api.SemanticVersion;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import xyz.lumian.constructeer.item.multimining.area.AreaProviderType;
+import xyz.lumian.constructeer.ModDefine;
 import xyz.lumian.constructeer.network.ModPayloads;
 import xyz.lumian.constructeer.network.client.ConfigureC2SFeatureSyncAck;
-import xyz.lumian.constructeer.registry.ModRegistries;
-
-import java.util.Map;
-import java.util.Optional;
 
 
 
@@ -40,13 +38,13 @@ public final class ModClientPayloadReceiver
     //******************************************************************************************************************
     private static Component createOutOfSyncMessage(
         final String modId,
-        final int    serverFeature,
-        final int    clientFeature
+        final Version serverFeature,
+        final Version clientFeature
     )
     {
         return Component.literal(
             modId + " mod feature set is out of sync, "
-            + (serverFeature > clientFeature ? "the client" : "the server") + " is not up to date");
+            + (serverFeature.compareTo(clientFeature) > 0 ? "the client" : "the server") + " is not up to date");
     }
     
     //******************************************************************************************************************
@@ -54,21 +52,23 @@ public final class ModClientPayloadReceiver
     {
         ClientConfigurationNetworking.registerGlobalReceiver(ModPayloads.CONFIGURE_FEATURE_SYNC, ((payload, context) ->
         {
-            final Map<String, Integer> ap_types = payload.areaProviderApiVersion();
-            
-            for (final var entry : ap_types.entrySet())
+            try
             {
-                final Identifier                    id   = Identifier.parse(entry.getKey());
-                final Optional<AreaProviderType<?>> type = ModRegistries.BuiltIn.AREA_PROVIDER_TYPE.getOptional(id);
+                final SemanticVersion server_version = SemanticVersion.parse(payload.modVersion());
+                final SemanticVersion client_version = SemanticVersion.parse(ModDefine.MOD_VERSION);
                 
-                if (type.isEmpty() || type.orElseThrow().apiVersion() != entry.getValue())
+                if (server_version.compareTo((Version) client_version) != 0)
                 {
-                    context.responseSender().disconnect(createOutOfSyncMessage(
-                        id.getNamespace(),
-                        entry.getValue(),
-                        type.map(AreaProviderType::apiVersion).orElse(0)));
+                    context.responseSender().disconnect(ModClientPayloadReceiver.createOutOfSyncMessage(
+                        ModDefine.MOD_ID,
+                        server_version,
+                        client_version));
                     return;
                 }
+            }
+            catch (final VersionParsingException ex)
+            {
+                throw new RuntimeException(ex);
             }
             
             context.responseSender().sendPacket(ConfigureC2SFeatureSyncAck.INSTANCE);

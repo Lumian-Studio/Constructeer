@@ -1,4 +1,5 @@
 plugins {
+	id 'java'
 	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
     id 'com.github.gmazzo.buildconfig' version "${buildconfig_version}"
 	id 'maven-publish'
@@ -6,6 +7,9 @@ plugins {
 
 version = project.mod_version
 group = project.mod_package
+
+java.targetCompatibility = 21
+java.sourceCompatibility = 21
 
 base {
 	archivesName = project.archives_base_name
@@ -87,6 +91,9 @@ dependencies {
     }
 
 	modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.forge_config_api_port_version}"
+
+	annotationProcessor 'systems.manifold:manifold-preprocessor:2026.1.0'
+    testAnnotationProcessor 'systems.manifold:manifold-preprocessor:2026.1.0'
 }
 
 processResources {
@@ -150,4 +157,17 @@ publishing {
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
 	}
+}
+
+if (JavaVersion.current() != JavaVersion.VERSION_1_8 &&
+    sourceSets.main.allJava.files.any {it.name == "module-info.java"}) {
+    tasks.withType(JavaCompile) {
+        // if you DO define a module-info.java file:
+        options.compilerArgs += ['-Xplugin:Manifold', '--module-path', it.classpath.asPath]
+    }
+} else {
+    tasks.withType(JavaCompile) {
+        // If you DO NOT define a module-info.java file:
+        options.compilerArgs += ['-Xplugin:Manifold']
+    }
 }

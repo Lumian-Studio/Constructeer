@@ -30,7 +30,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import xyz.lumian.constructeer.ModDefine;
-import xyz.lumian.constructeer.item.component.predicate.ModComponentPredicates;
+import xyz.lumian.constructeer.item.multimining.IMultiMining;
 
 import java.util.Map;
 
@@ -61,12 +61,12 @@ public final class ModComponents
             .cacheEncoding()
             .build());
     
-    public static final DataComponentType<MultiMining> MULTI_MINING = register(
+    public static final DataComponentType<IMultiMining> MULTI_MINING = register(
         "multi_mining",
         DataComponentType
-            .<MultiMining>builder()
-            .persistent(MultiMining.CODEC)
-            .networkSynchronized(MultiMining.STREAM_CODEC)
+            .<IMultiMining>builder()
+            .persistent(IMultiMining.CODEC)
+            .networkSynchronized(IMultiMining.STREAM_CODEC)
             .cacheEncoding()
             .build());
     

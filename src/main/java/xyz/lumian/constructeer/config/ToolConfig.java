@@ -22,12 +22,17 @@
 package xyz.lumian.constructeer.config;
 
 import com.electronwill.nightconfig.core.EnumGetMethod;
-import net.minecraft.tags.BlockTags;
+import net.minecraft.core.registries.Registries;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import xyz.lumian.constructeer.item.multimining.damage.DamageTypes;
+import xyz.lumian.constructeer.item.multimining.MmFactory;
+import xyz.lumian.constructeer.item.multimining.MultiMining;
+import xyz.lumian.constructeer.item.multimining.area.ToolProvider;
+import xyz.lumian.constructeer.item.multimining.damage.DamageType;
 import xyz.lumian.constructeer.item.multimining.SneakMode;
+import xyz.lumian.constructeer.item.multimining.predicate.ToolPredicate;
 import xyz.lumian.constructeer.item.multimining.timber.TimberMode;
 import net.neoforged.neoforge.common.ModConfigSpec.*;
+import xyz.lumian.constructeer.registry.RegistryId;
 
 import java.util.List;
 
@@ -35,28 +40,36 @@ import java.util.List;
 
 //**********************************************************************************************************************
 public record ToolConfig(
-    BooleanValue                checkHardness,
-    ConfigValue<List<?>>        includes,
-    ConfigValue<List<String>>   excludes,
-    ConfigValue<List<String>>   ignored,
-    EnumValue<TimberMode>       timberMode,
-    EnumValue<SneakMode>        sneakMode,
-    EnumValue<DamageTypes> damageMultiplier
-) implements IMultiMiningConfig
+    BooleanValue              checkHardness,
+    ConfigValue<List<?>>      includes,
+    ConfigValue<List<String>> excludes,
+    ConfigValue<List<String>> ignored,
+    EnumValue<TimberMode>     timberMode,
+    EnumValue<SneakMode>      sneakMode,
+    EnumValue<DamageType>     damageMultiplier
+) implements MmFactory
 {
     //******************************************************************************************************************
-    public ToolConfig(final String toolName, final ModConfigSpec.Builder builder)
+    public ToolConfig(final String toolName, final ModConfigSpec.Builder builder, final boolean defaultCheckHardness,
+                      final List<?> defaultIncludes, final List<String> defaultExcludes,
+                      final List<String> defaultIgnored, final TimberMode defaultTimberMode,
+                      final SneakMode defaultSneakMode, final DamageType defaultDamageType)
     {
-        this(toolName, ("multiMining." + toolName), builder);
+        this(toolName, ("multiMining." + toolName), builder, defaultCheckHardness, defaultIncludes, defaultExcludes,
+             defaultIgnored, defaultTimberMode, defaultSneakMode, defaultDamageType);
     }
     
     //------------------------------------------------------------------------------------------------------------------
-    private ToolConfig(final String toolName, final String prefix, final ModConfigSpec.Builder builder)
+    private ToolConfig(final String toolName, final String prefix, final ModConfigSpec.Builder builder,
+                       final boolean defaultCheckHardness, final List<?> defaultIncludes,
+                       final List<String> defaultExcludes, final List<String> defaultIgnored,
+                       final TimberMode defaultTimberMode, final SneakMode defaultSneakMode,
+                       final DamageType defaultDamageType)
     {
         this(
             builder
                 .comment("Whether neighbouring blocks should only be broken if their hardness is lower, or the same as the actively mined block.")
-                .define((prefix + ".checkHardness"), true),
+                .define((prefix + ".checkHardness"), defaultCheckHardness),
             builder
                 .comment("""
                     Specifies a set of block groups that should always be mined together, entries can be one of the following:
@@ -65,7 +78,7 @@ public record ToolConfig(
                     — Block/Tag list: Specifies a list of tags and blocks that should be mined together, much like with block tags""")
                 .defineList(
                     (prefix + ".included"),
-                    (() -> List.of("#" + BlockTags.BASE_STONE_OVERWORLD.location())),
+                    (() -> defaultIncludes),
                     ConfigHelper.DEFAULT_ID_SUPPLIER::get,
                     ConfigHelper::validateBlockPredicate),
             builder
@@ -73,35 +86,47 @@ public record ToolConfig(
                     Specifies a set of block groups that should never be mined together, entries can be one of the following:
                     — Block tag: Specifies that all blocks in the tag will always be ignored from consideration
                     — Block ID: Same as with tags, but for single blocks""")
-                .define(
-                    (prefix + ".excludes"),
-                    List::of,
-                    ConfigHelper::validateListOfRegistryIds),
+                .define((prefix + ".excludes"), defaultExcludes, ConfigHelper::validateListOfRegistryIds),
             builder
                 .comment("""
                     Specifies a set of blocks that should not trigger the tool, entries can be one of the following:
                     — Block tag: Specifies that all blocks inside the tag should be exempt from multi mining in general
                     — Block ID: Same as with tags, but for single blocks""")
-                .define(
-                    (prefix + ".ignored"),
-                    List::of,
-                    ConfigHelper::validateListOfRegistryIds),
+                .define((prefix + ".ignored"), defaultIgnored, ConfigHelper::validateListOfRegistryIds),
             builder
                 .comment("Specifies the behaviour of how blocks are destroyed upon mining with the " + toolName + ".")
-                .defineEnum((prefix + ".timberMode"), TimberMode.INSTANT, EnumGetMethod.NAME),
+                .defineEnum((prefix + ".timberMode"), defaultTimberMode, EnumGetMethod.NAME_IGNORECASE),
             builder
                 .comment("""
                     Determines the behaviour of what should happen when the player is sneaking while using the tool:
                     — NONE: This will just behave the same as if the player was not sneaking.
                     — VANILLA: This will behave as if you are using the vanilla pendant. (meaning, just one block will be mined)
                     — WEAK: This will only break surrounding blocks that exactly match the actively mined block, ignoring groups and break times.""")
-                .defineEnum((prefix + ".sneakMode"), SneakMode.WEAK, EnumGetMethod.NAME),
+                .defineEnum((prefix + ".sneakMode"), defaultSneakMode, EnumGetMethod.NAME_IGNORECASE),
             builder
                 .comment("""
                     Specifies the damage the tool is taking upon destroying a particular area:
                     — SINGLE: Only the block that has been destroyed will account for the tool's damage
                     — ALL: All blocks that have been mined will account for the tool's damage""")
-                .defineEnum((prefix + ".damageMultiplier"), DamageTypes.SINGLE, EnumGetMethod.NAME)
+                .defineEnum((prefix + ".damageMultiplier"), defaultDamageType, EnumGetMethod.NAME_IGNORECASE)
         );
+    }
+    
+    //==================================================================================================================
+    @Override
+    public MultiMining createComponent()
+    {
+        final ToolPredicate predicate = new ToolPredicate(
+            ToolPredicate.IncludeList.ofPredicates(this.includes.get().stream()
+                .map(ConfigHelper::resolveBlockPredicate)),
+            ConfigHelper.resolveIDs(this.excludes.get().stream()
+                .map(obj -> RegistryId.parse(Registries.BLOCK, obj))),
+            ConfigHelper.resolveIDs(this.ignored.get().stream()
+                .map(obj -> RegistryId.parse(Registries.BLOCK, obj))),
+            this.sneakMode.get(),
+            this.checkHardness.getAsBoolean()
+        );
+        return new MultiMining(new ToolProvider(predicate), this.timberMode.get().getHolder(),
+                               this.damageMultiplier.get());
     }
 }

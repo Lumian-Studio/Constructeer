@@ -22,31 +22,35 @@
 package xyz.lumian.constructeer.config;
 
 import com.electronwill.nightconfig.core.EnumGetMethod;
-import com.google.common.collect.ImmutableList;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.BlockTags;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import xyz.lumian.constructeer.item.multimining.damage.DamageTypes;
+import xyz.lumian.constructeer.item.multimining.MmFactory;
+import xyz.lumian.constructeer.item.multimining.MultiMining;
+import xyz.lumian.constructeer.item.multimining.area.TreeDetectionProvider;
+import xyz.lumian.constructeer.item.multimining.damage.DamageType;
 import xyz.lumian.constructeer.item.multimining.SneakMode;
 import xyz.lumian.constructeer.item.multimining.timber.TimberMode;
 import net.neoforged.neoforge.common.ModConfigSpec.*;
+import xyz.lumian.constructeer.registry.RegistryId;
 
-import java.util.Arrays;
 import java.util.List;
 
 
 
 //**********************************************************************************************************************
 public record SawConfig(
-    ConfigValue<List<String>>   validStemBlocks,
-    IntValue                    maxLeafDistance,
-    IntValue                    maxBlockCount,
-    IntValue                    minLeavesCount,
-    BooleanValue                chopBelowCut,
-    ConfigValue<String>         timberMode,
-    BooleanValue                stopIfExceedingMaximum,
-    EnumValue<SneakMode>        sneakMode,
-    EnumValue<DamageTypes> damageMultiplier
-) implements IMultiMiningConfig
+    ConfigValue<List<String>> validStemBlocks,
+    IntValue                  maxLeafDistance,
+    IntValue                  maxBlockCount,
+    IntValue                  minLeavesCount,
+    BooleanValue              chopBelowCut,
+    EnumValue<TimberMode>     timberMode,
+    BooleanValue              stopIfExceedingMaximum,
+    BooleanValue              scanDisjointedLogs,
+    EnumValue<SneakMode>      sneakMode,
+    EnumValue<DamageType>     damageMultiplier
+) implements MmFactory
 {
     //******************************************************************************************************************
     public SawConfig(final ModConfigSpec.Builder builder)
@@ -79,26 +83,43 @@ public record SawConfig(
                 .define("multiMining.saw.chopBelowCut", false),
             builder
                 .comment("Specifies the behaviour of how blocks are destroyed upon chopping trees with the saw.")
-                .defineInList("multiMining.saw.timberMode", "FALLING_TREE", ImmutableList.<String>builder()
-                    .addAll(Arrays.stream(TimberMode.values()).map(TimberMode::name).toList())
-                    .add("FALLING_TREE")
-                    .build()),
+                .defineEnum("multiMining.saw.timberMode", TimberMode.FALLING_TREE, EnumGetMethod.NAME_IGNORECASE),
             builder
                 .comment("Specifies whether the tree should not be cut if the maximum of blocks has been exceeded.")
                 .define("multiMining.saw.stopIfExceedingMaximum", true),
+            builder
+                .comment("Specifies whether logs should be considered part of the tree even if there is one leaf block between it and the main stem.")
+                .define("multiMining.saw.scanDisjointedLogs", false),
             builder
                 .comment("""
                     Determines the behaviour of what should happen when the player is sneaking while using the tool:
                     — NONE: This will just behave the same as if the player was not sneaking.
                     — VANILLA: This will behave as if you are using the vanilla pendant. (meaning, just one block will be mined)
                     — WEAK: This will only break the tree logs while the leaves will be preserved.""")
-                .defineEnum("multiMining.saw.sneakMode", SneakMode.WEAK, EnumGetMethod.NAME),
+                .defineEnum("multiMining.saw.sneakMode", SneakMode.NONE, EnumGetMethod.NAME_IGNORECASE),
             builder
                 .comment("""
                     Specifies the damage the tool is taking upon destroying a particular area:
                     — SINGLE: Only the block that has been destroyed will account for the tool's damage
                     — ALL: All blocks that have been mined will account for the tool's damage (ignoring leaves)""")
-                .defineEnum("multiMining.saw.damageMultiplier", DamageTypes.SINGLE, EnumGetMethod.NAME)
+                .defineEnum("multiMining.saw.damageMultiplier", DamageType.SINGLE, EnumGetMethod.NAME_IGNORECASE)
         );
+    }
+    
+    //==================================================================================================================
+    @Override
+    public MultiMining createComponent()
+    {
+        final TreeDetectionProvider provider = new TreeDetectionProvider(
+            ConfigHelper.resolveIDs(this.validStemBlocks.get().stream()
+                .map(obj -> RegistryId.parse(Registries.BLOCK, obj))),
+            this.maxLeafDistance       .getAsInt(),
+            this.maxBlockCount         .getAsInt(),
+            this.minLeavesCount        .getAsInt(),
+            this.chopBelowCut          .getAsBoolean(),
+            this.stopIfExceedingMaximum.getAsBoolean(),
+            this.scanDisjointedLogs    .getAsBoolean(),
+            this.sneakMode             .get());
+        return new MultiMining(provider, this.timberMode.get().getHolder(), this.damageMultiplier.get());
     }
 }

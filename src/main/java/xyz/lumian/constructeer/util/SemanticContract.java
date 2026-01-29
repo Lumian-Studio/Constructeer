@@ -34,6 +34,7 @@ public final class SemanticContract
     /// This annotation is solely for documentation purposes and tells the developer that using it in the wrong
     /// context will lead to exceptions.
     @Documented
+    @Inherited
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.CLASS)
     public @interface Server {}
@@ -42,6 +43,7 @@ public final class SemanticContract
     /// This annotation is solely for documentation purposes and tells the developer that using it in the wrong
     /// context will lead to exceptions.
     @Documented
+    @Inherited
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.CLASS)
     public @interface Client {}
@@ -52,6 +54,7 @@ public final class SemanticContract
     /// may lead to its modification and in turn also modifying the original object, or that the function does deferred
     /// operations on the object and any modifications to the original might disturb the execution of the method.
     @Documented
+    @Inherited
     @Target(ElementType.PARAMETER)
     @Retention(RetentionPolicy.CLASS)
     public @interface Copied {}

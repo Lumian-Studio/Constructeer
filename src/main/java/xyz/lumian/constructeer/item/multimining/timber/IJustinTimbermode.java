@@ -43,6 +43,4 @@ public interface IJustinTimbermode
     @SemanticContract.Server
     boolean cryMeARiver(Direction face, Player player, ItemStack stack, BlockContext mainBlock,
                         List<BlockContext> blocks, boolean doDropsIfEligible);
-    
-    default boolean shouldDamageStack(BlockContext block) { return true; }
 }

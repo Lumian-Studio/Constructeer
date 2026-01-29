@@ -47,23 +47,23 @@ public interface IAreaProvider
     
     enum Result
     {
-        /// The action was successful, break all the block.
+        /// The action was successful, continue action.
         SUCCESS,
         
-        /// The action failed, break only the mined block.
+        /// The action failed, cancel action.
         FAILED,
         
-        /// The action failed, but the mined block should not be destroyed.
+        /// The action failed, but treat it as partially successful.
         PASS
     }
     
     //******************************************************************************************************************
-    MapCodec<IAreaProvider> MAP_CODEC = ModRegistries.BuiltIn.AREA_PROVIDER_TYPE.byNameCodec()
-        .dispatchMap(IAreaProvider::type, AreaProviderType::codec);
+    Codec<IAreaProvider> CODEC = ModRegistries.BuiltIn.AREA_PROVIDER_TYPE.byNameCodec()
+        .dispatch(IAreaProvider::type, AreaProviderType::codec);
     
     StreamCodec<RegistryFriendlyByteBuf, IAreaProvider> STREAM_CODEC = ByteBufCodecs
         .registry(ModRegistries.AREA_PROVIDER_TYPE)
-        .dispatch(IAreaProvider::type, (type -> ByteBufCodecs.fromCodecWithRegistries(type.codec().codec())));
+        .dispatch(IAreaProvider::type, AreaProviderType::streamCodec);
     
     //******************************************************************************************************************
     AreaProviderType<? extends IAreaProvider> type();

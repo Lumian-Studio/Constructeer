@@ -36,7 +36,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import xyz.lumian.constructeer.item.multimining.SneakMode;
 import xyz.lumian.constructeer.util.BlockContext;
+import xyz.lumian.constructeer.util.CodecUtil;
 import xyz.lumian.constructeer.util.Cuboid;
 
 import java.util.*;
@@ -72,11 +74,13 @@ public class TreeDetectionProvider
     implements IAreaProvider
 {
     //******************************************************************************************************************
-    public static final int     DEFAULT_MAX_LEAF_DISTANCE         = 7;
-    public static final int     DEFAULT_MAX_BLOCK_COUNT           = 500;
-    public static final int     DEFAULT_MIN_LEAVES_COUNT          = 1;
-    public static final boolean DEFAULT_SCAN_DOWNWARDS            = false;
-    public static final boolean DEFAULT_STOP_IF_EXCEEDING_MAXIMUM = true;
+    public static final int       DEFAULT_MAX_LEAF_DISTANCE         = 7;
+    public static final int       DEFAULT_MAX_BLOCK_COUNT           = 500;
+    public static final int       DEFAULT_MIN_LEAVES_COUNT          = 1;
+    public static final boolean   DEFAULT_SCAN_DOWNWARDS            = false;
+    public static final boolean   DEFAULT_STOP_IF_EXCEEDING_MAXIMUM = true;
+    public static final boolean   DEFAULT_SCAN_DISJOINTED_LOGS      = false;
+    public static final SneakMode DEFAULT_SNEAK_MODE                = SneakMode.NONE;
     
     public static final MapCodec<TreeDetectionProvider> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance
         .group(
@@ -97,7 +101,13 @@ public class TreeDetectionProvider
                 .forGetter(prov -> prov.scanDownwards),
             Codec.BOOL
                 .optionalFieldOf("stopIfExceedingMaximum", TreeDetectionProvider.DEFAULT_STOP_IF_EXCEEDING_MAXIMUM)
-                .forGetter(prov -> prov.stopIfExceedingMaximum))
+                .forGetter(prov -> prov.stopIfExceedingMaximum),
+            Codec.BOOL
+                .optionalFieldOf("scanDisjointedLogs", TreeDetectionProvider.DEFAULT_SCAN_DISJOINTED_LOGS)
+                .forGetter(prov -> prov.scanDisjointedLogs),
+            SneakMode.CODEC
+                .optionalFieldOf("sneakMode", TreeDetectionProvider.DEFAULT_SNEAK_MODE)
+                .forGetter(prov -> prov.sneakMode))
         .apply(instance, TreeDetectionProvider::new));
     
     public static final StreamCodec<RegistryFriendlyByteBuf, TreeDetectionProvider> STREAM_CODEC = StreamCodec
@@ -108,6 +118,8 @@ public class TreeDetectionProvider
             ByteBufCodecs.VAR_INT,                                      (prov -> prov.minLeavesCount),
             ByteBufCodecs.BOOL,                                         (prov -> prov.scanDownwards),
             ByteBufCodecs.BOOL,                                         (prov -> prov.stopIfExceedingMaximum),
+            ByteBufCodecs.BOOL,                                         (prov -> prov.scanDisjointedLogs),
+            CodecUtil.smallEnum(SneakMode.values()),                    (prov -> prov.sneakMode),
             TreeDetectionProvider::new);
     
     //------------------------------------------------------------------------------------------------------------------
@@ -144,6 +156,12 @@ public class TreeDetectionProvider
     /// Whether the tree should not be considered a tree if the scanned blocks exceed [#maxBlockCount].
     public final boolean stopIfExceedingMaximum;
     
+    /// Whether logs should be still considered part of the tree even if there is one leaf block between.
+    public final boolean scanDisjointedLogs;
+    
+    /// Determines how sneaking affects the provider.
+    public final SneakMode sneakMode;
+    
     //******************************************************************************************************************
     /// Creates a new [TreeDetectionProvider] instance.
     /// @param validStemBlocks        [#validStemBlocks]
@@ -152,13 +170,17 @@ public class TreeDetectionProvider
     /// @param minLeavesCount         [#minLeavesCount]
     /// @param scanDownwards          [#scanDownwards]
     /// @param stopIfExceedingMaximum [#stopIfExceedingMaximum]
+    /// @param scanDisjointedLogs     [#scanDisjointedLogs]
+    /// @param sneakMode              [#sneakMode]
     public TreeDetectionProvider(
         final HolderSet<Block> validStemBlocks,
         final int              maxLeafDistance,
         final int              maxBlockCount,
         final int              minLeavesCount,
         final boolean          scanDownwards,
-        final boolean          stopIfExceedingMaximum
+        final boolean          stopIfExceedingMaximum,
+        final boolean          scanDisjointedLogs,
+        final SneakMode        sneakMode
     )
     {
         if (maxLeafDistance < 1)
@@ -182,6 +204,8 @@ public class TreeDetectionProvider
         this.minLeavesCount         = minLeavesCount;
         this.scanDownwards          = scanDownwards;
         this.stopIfExceedingMaximum = stopIfExceedingMaximum;
+        this.scanDisjointedLogs     = scanDisjointedLogs;
+        this.sneakMode              = sneakMode;
     }
     
     /// Creates a defaulted [TreeDetectionProvider] instance.
@@ -193,7 +217,9 @@ public class TreeDetectionProvider
              TreeDetectionProvider.DEFAULT_MAX_BLOCK_COUNT,
              TreeDetectionProvider.DEFAULT_MIN_LEAVES_COUNT,
              TreeDetectionProvider.DEFAULT_SCAN_DOWNWARDS,
-             TreeDetectionProvider.DEFAULT_STOP_IF_EXCEEDING_MAXIMUM);
+             TreeDetectionProvider.DEFAULT_STOP_IF_EXCEEDING_MAXIMUM,
+             TreeDetectionProvider.DEFAULT_SCAN_DISJOINTED_LOGS,
+             TreeDetectionProvider.DEFAULT_SNEAK_MODE);
     }
     
     //==================================================================================================================
@@ -204,6 +230,11 @@ public class TreeDetectionProvider
     public Result provide(final Direction face, final Player player, final ItemStack stack, final BlockContext block,
                           final int modifier, final Output output)
     {
+        if (player.isCrouching() && this.sneakMode == SneakMode.VANILLA)
+        {
+            return Result.FAILED;
+        }
+        
         if (!block.is(this.validStemBlocks) || this.maxBlockCount < (this.minLeavesCount + 1))
         {
             return Result.FAILED;
@@ -241,15 +272,18 @@ public class TreeDetectionProvider
             
             ++count;
             
+            final BlockPos.MutableBlockPos log_pos    = log.pos().mutable();
+            final boolean                  add_leaves = (!player.isCrouching() || this.sneakMode != SneakMode.WEAK);
+            
             // Scan further logs in all non-cardinal directions
             for (final var pos : TreeDetectionProvider.STEM_SCAN_AREA)
             {
-                if (pos.getY() < 0 && !this.scanDownwards)
+                log_pos.setWithOffset(log.pos(), pos);
+                
+                if (!this.scanDownwards && log_pos.getY() < block.pos().getY())
                 {
                     continue;
                 }
-                
-                final BlockPos log_pos = log.pos().offset(pos);
                 
                 if (visited.contains(log_pos))
                 {
@@ -260,7 +294,7 @@ public class TreeDetectionProvider
                 
                 if (log_block.is(this.validStemBlocks))
                 {
-                    visited.add(log_pos);
+                    visited.add(log_block.pos());
                     nodes.addLast(log_block);
                 }
             }
@@ -268,14 +302,14 @@ public class TreeDetectionProvider
             // Scan for leaves stuff and logs in all cardinal directions
             for (final var log_dir : Direction.values())
             {
-                final BlockPos test_pos = log.pos().offset(log_dir.getUnitVec3i());
+                log_pos.setWithOffset(log.pos(), log_dir.getUnitVec3i());
                 
-                if (visited.contains(test_pos))
+                if (visited.contains(log_pos))
                 {
                     continue;
                 }
                 
-                final BlockContext test_block = log.withPos(test_pos);
+                final BlockContext test_block = log.withPos(log_pos);
                 
                 // Check if persistent is false
                 if (!test_block.state().getValueOrElse(BlockStateProperties.PERSISTENT, true))
@@ -307,7 +341,7 @@ public class TreeDetectionProvider
                                 return (leaf_count >= this.minLeavesCount ? Result.SUCCESS : Result.FAILED);
                             }
                             
-                            if (!output.acceptAndTest(leaf))
+                            if (add_leaves && !output.acceptAndTest(leaf))
                             {
                                 return (leaf_count >= this.minLeavesCount ? Result.SUCCESS : Result.FAILED);
                             }
@@ -315,9 +349,11 @@ public class TreeDetectionProvider
                             ++leaf_count;
                             ++count;
                             
+                            final BlockPos.MutableBlockPos leaf_pos = leaf.pos().mutable();
+                            
                             for (final var node_dir : Direction.values())
                             {
-                                final BlockPos leaf_pos = leaf.pos().relative(node_dir);
+                                leaf_pos.setWithOffset(leaf.pos(), node_dir);
                                 
                                 if (visited.contains(leaf_pos))
                                 {
@@ -326,7 +362,10 @@ public class TreeDetectionProvider
                                 
                                 final BlockContext leaf_block = log.withPos(leaf_pos);
                                 
-                                if (!leaf_block.state().getValueOrElse(BlockStateProperties.PERSISTENT, true))
+                                if (
+                                    add_leaves
+                                    && !leaf_block.state().getValueOrElse(BlockStateProperties.PERSISTENT, true)
+                                )
                                 {
                                     final int leaf_distance = leaf_block.state()
                                         .getValueOrElse(BlockStateProperties.DISTANCE, 0);
@@ -340,12 +379,12 @@ public class TreeDetectionProvider
                                         continue;
                                     }
                                 }
-                                else if (leaf_block.is(this.validStemBlocks))
+                                else if (this.scanDisjointedLogs && leaf_block.is(this.validStemBlocks))
                                 {
                                     nodes.addLast(leaf_block);
                                 }
                                 
-                                visited.add(leaf_pos);
+                                visited.add(leaf_block.pos());
                             }
                         }
                     }
@@ -356,12 +395,15 @@ public class TreeDetectionProvider
                         continue;
                     }
                 }
-                else if ((log_dir != Direction.DOWN || this.scanDownwards) && test_block.is(this.validStemBlocks))
+                else if (
+                    (log_pos.getY() >= block.pos().getY() || this.scanDownwards)
+                    && test_block.is(this.validStemBlocks)
+                )
                 {
                     nodes.addLast(test_block);
                 }
                 
-                visited.add(test_pos);
+                visited.add(test_block.pos());
             }
         }
         
