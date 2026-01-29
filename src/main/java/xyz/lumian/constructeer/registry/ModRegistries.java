@@ -58,12 +58,14 @@ public final class ModRegistries
             = registerSynced(ModRegistries.MULTI_MINING_TYPE, null);
         
         //**************************************************************************************************************
+        @SuppressWarnings("SameParameterValue")
         private static <T> Registry<T> registerOptional(final           ResourceKey<Registry<T>> key,
                                                         final @Nullable Identifier               defaultId)
         {
             return BuiltIn.register(key, defaultId, RegistryAttribute.OPTIONAL);
         }
         
+        @SuppressWarnings("SameParameterValue")
         private static <T> Registry<T> registerSynced(final           ResourceKey<Registry<T>> key,
                                                       final @Nullable Identifier               defaultId)
         {

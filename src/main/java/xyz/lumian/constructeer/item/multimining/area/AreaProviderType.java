@@ -22,7 +22,6 @@
 package xyz.lumian.constructeer.item.multimining.area;
 
 import com.mojang.serialization.MapCodec;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.core.Registry;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

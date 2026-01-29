@@ -22,24 +22,15 @@
 package xyz.lumian.constructeer.item.multimining.timber;
 
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderSet;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.Tool;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import xyz.lumian.constructeer.ConstructeerMain;
-import xyz.lumian.constructeer.config.ConfigHelper;
 import xyz.lumian.constructeer.item.multimining.MultiMiningBox;
-import xyz.lumian.constructeer.registry.RegistryId;
 import xyz.lumian.constructeer.sound.ModSoundEvents;
 import xyz.lumian.constructeer.util.BlockContext;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 

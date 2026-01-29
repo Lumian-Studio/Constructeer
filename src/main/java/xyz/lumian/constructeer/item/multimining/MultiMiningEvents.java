@@ -1,6 +1,5 @@
 package xyz.lumian.constructeer.item.multimining;
 
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.core.Direction;
@@ -8,7 +7,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import xyz.lumian.constructeer.util.BlockContext;
 
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -20,6 +18,7 @@ public class MultiMiningEvents
     public interface MultiMiningBefore
     {
         //**************************************************************************************************************
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         boolean before(Direction face, Player player, ItemStack toolStack, BlockContext mainBlock,
                        List<BlockContext> blocks);
     }

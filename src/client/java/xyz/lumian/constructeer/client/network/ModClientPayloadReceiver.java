@@ -37,7 +37,7 @@ public final class ModClientPayloadReceiver
 {
     //******************************************************************************************************************
     private static Component createOutOfSyncMessage(
-        final String modId,
+        @SuppressWarnings("SameParameterValue") final String modId,
         final Version serverFeature,
         final Version clientFeature
     )

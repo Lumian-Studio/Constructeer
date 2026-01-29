@@ -129,7 +129,7 @@ public record PlayC2SUpdateHeldTool(
         {
             final int count = inHand.getCount();
             
-            // AHA would you look at that, the perfect opportunity to swap slot contents
+            // AHA! Would you look at that, the perfect opportunity to swap slot contents
             if (count == 1 || content.isEmpty())
             {
                 pouch.set(ModComponents.POUCH_CONTENT, new PouchContent(inHand.split(1)));

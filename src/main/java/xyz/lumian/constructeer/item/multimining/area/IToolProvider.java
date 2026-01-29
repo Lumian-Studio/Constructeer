@@ -24,7 +24,6 @@ package xyz.lumian.constructeer.item.multimining.area;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import xyz.lumian.constructeer.item.multimining.predicate.IMultiMiningPredicate;
 import xyz.lumian.constructeer.item.multimining.predicate.IToolPredicate;
 import xyz.lumian.constructeer.util.BlockContext;
 
