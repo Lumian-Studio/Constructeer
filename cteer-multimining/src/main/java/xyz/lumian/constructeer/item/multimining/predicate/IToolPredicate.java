@@ -83,7 +83,10 @@ public interface IToolPredicate
     
     default boolean hardnessSuffices(final BlockContext mainBlock, final BlockContext testBlock)
     {
-        return (!this.shouldCheckHardness() || mainBlock.getHardness() >= testBlock.getHardness());
+        return (
+            testBlock.getHardness() >= 0f
+            && (!this.shouldCheckHardness() || mainBlock.getHardness() >= testBlock.getHardness())
+        );
     }
     
     default boolean test(final Player player, final BlockContext main, final BlockContext test)

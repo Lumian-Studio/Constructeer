@@ -41,9 +41,12 @@ public interface IToolProvider
     //==================================================================================================================
     @Override
     default boolean acceptBlock(final Player player, final ItemStack stack, final BlockContext mainBlock,
-                               final BlockContext relBlock)
+                                final BlockContext relBlock)
     {
-        return this.predicate().test(player, mainBlock, relBlock);
+        return (
+            this.predicate().test(player, mainBlock, relBlock)
+            && (!relBlock.state().requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(relBlock.state()))
+        );
     }
     
     @Override

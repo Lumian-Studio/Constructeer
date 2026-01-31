@@ -25,6 +25,7 @@ import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.tags.ItemTags;
 import xyz.lumian.constructeer.item.ModItems;
 import xyz.lumian.constructeer.tag.ModItemTags;
 
@@ -62,13 +63,24 @@ public abstract class ModTagProvider
             
             this.valueLookupBuilder(ModItemTags.MULTI_MINING_TOOLS)
                 .addTag(ModItemTags.HAMMERS)
-                .addTag(ModItemTags.PLOWS);
+                .addTag(ModItemTags.PLOWS)
+                .addTag(ModItemTags.SAWS);
             
             this.valueLookupBuilder(ModItemTags.COMMON_TOOLS)
                 .setReplace(false)
-                .addTag(ModItemTags.HAMMERS)
-                .addTag(ModItemTags.PLOWS)
-                .addTag(ModItemTags.SAWS);
+                .addTag(ModItemTags.MULTI_MINING_TOOLS);
+            
+            this.valueLookupBuilder(ItemTags.MINING_ENCHANTABLE)
+                .setReplace(false)
+                .addTag(ModItemTags.MULTI_MINING_TOOLS);
+            
+            this.valueLookupBuilder(ItemTags.DURABILITY_ENCHANTABLE)
+                .setReplace(false)
+                .addTag(ModItemTags.MULTI_MINING_TOOLS);
+            
+            this.valueLookupBuilder(ItemTags.MINING_LOOT_ENCHANTABLE)
+                .setReplace(false)
+                .addTag(ModItemTags.MULTI_MINING_TOOLS);
         }
     }
 }
