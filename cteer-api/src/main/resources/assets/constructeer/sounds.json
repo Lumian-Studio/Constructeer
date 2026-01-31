@@ -1,0 +1,6 @@
+{
+    "entity.falling_object.tree": {
+        "subtitle": "sound.constructeer.tree_falling",
+        "sounds": [ "constructeer:tree_falling" ]
+    }
+}

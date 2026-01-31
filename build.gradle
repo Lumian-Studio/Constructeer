@@ -1,0 +1,152 @@
+import net.fabricmc.loom.task.ValidateMixinNameTask
+
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+
+def addSubmodules(project, List<String> dependencies)
+{
+	def deps        = dependencies.iterator().collect { project.dependencies.project(path: ":$it") }
+	def client_deps = dependencies.iterator().collect { findProject(":$it").sourceSets.client.output }
+
+	project.dependencies {
+		deps.each {
+			api it
+		}
+
+		client_deps.each {
+			clientImplementation it
+		}
+	}
+}
+
+def debugArgs = [
+	"-enableassertions",
+	"-Dmixin.debug.verify=true",
+	"-Dmixin.debug.countInjections=true",
+]
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+}
+
+allprojects {
+	group = project.mod_package
+
+	tasks.withType(GenerateModuleMetadata).configureEach {
+		enabled = false
+	}
+
+	apply plugin: "net.fabricmc.fabric-loom-remap"
+
+	tasks.withType(JavaCompile).configureEach {
+		it.options.release = 21
+	}
+
+	java {
+		withSourcesJar()
+	}
+
+	loom {
+		splitEnvironmentSourceSets()
+	}
+
+	loom.runs.configureEach {
+		vmArgs(debugArgs)
+	}
+
+	allprojects.each {it2 ->
+		loom.mods.register(it2.name) {
+			sourceSet it2.sourceSets.main
+			sourceSet it2.sourceSets.client
+		}
+	}
+
+	repositories {
+		maven {
+			name = 'ParchmentMC'
+			url  = 'https://maven.parchmentmc.org'
+		}
+	}
+
+	dependencies {
+		minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+		mappings loom.layered() {
+			officialMojangMappings()
+			parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
+		}
+
+		modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+		modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	}
+
+	processResources {
+		inputs.property "version", project.version
+		inputs.property "name",    project.mod_name
+
+		filesMatching("fabric.mod.json") {
+			expand "version": inputs.properties.version,
+				   "name":    inputs.properties.name
+		}
+	}
+
+	String archivesName = project.base.archivesName.get()
+	[jar, sourcesJar].each {
+		it.from(rootProject.file("LICENSE.md")) {
+			rename { "${it}-${archivesName}"}
+		}
+	}
+
+	tasks.register('validateMixinNames', ValidateMixinNameTask) {
+		source(sourceSets.main.output)
+		source(sourceSets.client.output)
+		source(sourceSets.testmod.output)
+		outputs.upToDateWhen { true } // Task has no outputs
+	}
+	check.dependsOn "validateMixinNames"
+}
+
+subprojects {
+	base {
+		archivesName = project.name
+	}
+}
+
+dependencies {
+	subprojects.each {
+		api project(path: "${it.path}")
+		clientImplementation project("${it.path}:").sourceSets.client.output
+	}
+}
+
+configurations {
+	nestedJars {
+		transitive = false
+	}
+}
+
+dependencies {
+	subprojects.each {
+		nestedJars project("${it.path}")
+	}
+}
+
+loom.nestJars(tasks.named("jar"), configurations.nestedJars)
+
+tasks.register("checkNoDuplicateFiles", Zip) {
+	inputs.files configurations.nestedJars
+	destinationDirectory = layout.buildDirectory.dir("test")
+
+	from {
+		configurations.nestedJars.files.collect { zipTree(it) }
+	}
+
+	// We expect these files to be duplicated, so exclude them.
+	exclude 'META-INF/**'
+	exclude 'fabric.mod.json'
+}
+check.dependsOn "checkNoDuplicateFiles"

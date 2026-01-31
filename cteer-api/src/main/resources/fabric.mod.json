@@ -1,0 +1,23 @@
+{
+	"schemaVersion": 1,
+	"id": "constructeer-api",
+	"version": "${version}",
+	"name": "${name}",
+	"description": "Make Constructeer your own.",
+	"authors": [ "LumiaLights" ],
+	"contact": {
+		"homepage": "https://modrinth.com/mod/constructeer",
+		"sources": "https://github.com/Lumian-Studio/constructeer"
+	},
+	"license": "MIT",
+	"icon": "assets/constructeer/icon.png",
+	"environment": "*",
+	"entrypoints": {},
+	"mixins": [],
+	"depends": {
+		"fabricloader": ">=0.18.3",
+		"minecraft": "1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

@@ -1,0 +1,18 @@
+plugins {
+    id 'com.github.gmazzo.buildconfig' version "${buildconfig_version}"
+}
+
+version = rootProject.version
+
+buildConfig {
+    className   "CteerAutoDefine"
+    packageName project.mod_package
+
+    useJavaOutput()
+
+    buildConfigField String.class, 'ID',         project.mod_id
+    buildConfigField String.class, 'NAME',       project.mod_name
+    buildConfigField String.class, 'VERSION',    project.mod_version
+    buildConfigField String.class, 'MC_VERSION', project.minecraft_version
+	buildConfigField String.class, 'PACKAGE',    project.mod_package
+}
