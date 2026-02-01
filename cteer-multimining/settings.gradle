@@ -9,8 +9,5 @@ pluginManagement {
 	}
 }
 
-rootProject.name = "Constructeer"
+rootProject.name = "Constructeer Multi Mining"
 
-includeBuild 'build-logic'
-include 'cteer-api'
-include 'cteer-multimining'

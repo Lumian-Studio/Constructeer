@@ -1,14 +1,11 @@
 plugins {
     id 'com.github.gmazzo.buildconfig' version "${buildconfig_version}"
+    id 'constructeer.mod-conventions'
 }
-
-version = rootProject.version
 
 buildConfig {
     className   "CteerAutoDefine"
     packageName project.mod_package
-
-    useJavaOutput()
 
     buildConfigField String.class, 'ID',         project.mod_id
     buildConfigField String.class, 'NAME',       project.mod_name

@@ -4,13 +4,10 @@ pluginManagement {
 			name = 'Fabric'
 			url = 'https://maven.fabricmc.net/'
 		}
+
 		mavenCentral()
 		gradlePluginPortal()
 	}
 }
 
-rootProject.name = "Constructeer"
-
-includeBuild 'build-logic'
-include 'cteer-api'
-include 'cteer-multimining'
+rootProject.name = "build-logic"
