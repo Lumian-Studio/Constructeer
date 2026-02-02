@@ -1,0 +1,21 @@
+plugins {
+    id 'groovy-gradle-plugin'
+}
+
+repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+
+    mavenCentral()
+    gradlePluginPortal()
+}
+
+def root_props = new Properties()
+file("../gradle.properties").withInputStream { root_props.load(it) }
+
+dependencies {
+    implementation "net.fabricmc.fabric-loom-remap:net.fabricmc.fabric-loom-remap.gradle.plugin:${root_props.loom_version}"
+    implementation "com.github.gmazzo.buildconfig:com.github.gmazzo.buildconfig.gradle.plugin:${root_props.build_config_version}"
+}

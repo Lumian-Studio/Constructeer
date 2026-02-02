@@ -8,3 +8,12 @@ pluginManagement {
 		gradlePluginPortal()
 	}
 }
+
+def modules = [
+	'core',
+	'multimining'
+]
+
+rootProject.name = "Constructeer"
+includeBuild('build-logic')
+modules.each { include("cteer-${it}")}

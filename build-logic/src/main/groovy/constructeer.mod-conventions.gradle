@@ -1,0 +1,93 @@
+plugins {
+    id 'net.fabricmc.fabric-loom-remap'
+    id 'com.github.gmazzo.buildconfig'
+}
+
+group   = project.mod_package
+version = project.mod_version
+
+def module_id   = "${project.mod_id}-${project.module_id}"
+def module_name = "${project.mod_name} ${project.module_name}"
+
+base {
+    archivesName = "${module_id}-${project.mod_version}-fabric-${project.minecraft_version}"
+}
+
+repositories {
+    maven {
+        name = 'ParchmentMC'
+        url  = 'https://maven.parchmentmc.org'
+    }
+
+	maven { url "https://maven.shedaniel.me/" }
+
+	maven {
+        name = "Fuzs Mod Resources"
+        url  = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
+    }
+
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.forge_config_api_port_version}"
+	modApi("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}") {
+		exclude(group: "net.fabricmc.fabric-api")
+	}
+}
+
+tasks.withType(GenerateModuleMetadata).configureEach {
+    enabled = false
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = project.java_version.toInteger()
+}
+
+java {
+	withSourcesJar()
+
+    sourceCompatibility = project.java_version.toInteger()
+	targetCompatibility = project.java_version.toInteger()
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        "${module_id}" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+loom.runs.configureEach {
+    vmArgs("-enableassertions", "-Dmixin.debug.verify=true", "-Dmixin.debug.countInjections=true")
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "name",    module_name
+
+    filesMatching("fabric.mod.json") {
+        expand "version": inputs.properties.version,
+               "name":    inputs.properties.name
+    }
+}
+
+jar {
+    inputs.property "archivesName", project.base.archivesName
+
+    from(rootProject.file("LICENSE.md")) {
+        rename { "${it}_${inputs.properties.archivesName}" }
+    }
+}

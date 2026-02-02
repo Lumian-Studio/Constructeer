@@ -1,0 +1,14 @@
+plugins {
+    id 'constructeer.mod-conventions'
+}
+
+buildConfig {
+    className   "CteerAutoDefine"
+    packageName project.mod_package
+
+    buildConfigField String.class, 'ID',         project.mod_id
+    buildConfigField String.class, 'NAME',       project.mod_name
+    buildConfigField String.class, 'VERSION',    project.mod_version
+    buildConfigField String.class, 'MC_VERSION', project.minecraft_version
+	buildConfigField String.class, 'PACKAGE',    project.mod_package
+}
