@@ -1,0 +1,7 @@
+{
+	"required": true,
+	"package": "xyz.lumian.constructeer.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [ "MultiPlayerGameModeMixin", "AbstractContainerMenuAccessor" ],
+	"injectors": { "defaultRequire": 1 }
+}

@@ -9,11 +9,10 @@ pluginManagement {
 	}
 }
 
-def modules = [
-	'core',
-	'multimining'
-]
+rootProject.name = "constructeer"
 
-rootProject.name = "Constructeer"
 includeBuild('build-logic')
-modules.each { include("cteer-${it}")}
+include('feature-core')
+include('feature-multimining')
+include('feature-toolbelt')
+include('bundle')

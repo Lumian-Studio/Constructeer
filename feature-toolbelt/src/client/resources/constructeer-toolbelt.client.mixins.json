@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "xyz.lumian.constructeer.toolbelt.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+        "AvatarRendererMixin",
+        "HumanoidMobRendererMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

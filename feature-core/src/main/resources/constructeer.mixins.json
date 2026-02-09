@@ -1,0 +1,11 @@
+{
+	"required": true,
+	"package": "xyz.lumian.constructeer.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"ServerPlayerGameModeMixin",
+		"BuiltInRegistriesMixin"
+	],
+	"injectors": { "defaultRequire": 1 },
+	"overwrites": { "requireAnnotations": true }
+}

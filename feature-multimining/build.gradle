@@ -1,0 +1,7 @@
+plugins {
+    id 'constructeer.mod-conventions'
+}
+
+dependencies {
+	implementation project(path: ':feature-core', configuration: 'namedElements')
+}
