@@ -52,16 +52,16 @@ public class BlockContext
     }
     
     //******************************************************************************************************************
-    private final Level       level;
-    private final BlockPos    pos;
-    private       BlockState  state;
+    private final Level      level;
+    private final BlockPos   pos;
+    private       BlockState state;
     
     //******************************************************************************************************************
     public BlockContext(final Level level, final BlockState state, final BlockPos pos)
     {
-        this.level  = Objects.requireNonNull(level, "level must not be null");
-        this.pos    = pos.immutable();
-        this.state  = Objects.requireNonNull(state, "state must not be null");
+        this.level = Objects.requireNonNull(level, "level must not be null");
+        this.pos   = pos.immutable();
+        this.state = Objects.requireNonNull(state, "state must not be null");
     }
     
     //==================================================================================================================
@@ -69,7 +69,8 @@ public class BlockContext
     public BlockPos   pos()   { return this.pos;   }
     public Level      level() { return this.level; }
     
-    @Nullable public BlockEntity getBlockEntity() { return this.level.getBlockEntity(this.pos); }
+    @Nullable
+    public BlockEntity getBlockEntity() { return this.level.getBlockEntity(this.pos); }
     
     public float getHardness() { return this.state.getDestroySpeed(this.level, this.pos); }
     
@@ -108,16 +109,6 @@ public class BlockContext
         return BlockContext.forLevel(this.level, this.pos.offset(offset));
     }
     
-    public BlockContext withPos(final BlockPos.MutableBlockPos newPos)
-    {
-        if (newPos.equals(this.pos))
-        {
-            return this;
-        }
-        
-        return BlockContext.forLevel(this.level, newPos);
-    }
-    
     public BlockContext withPos(final BlockPos newPos)
     {
         if (newPos.equals(this.pos))
@@ -133,7 +124,7 @@ public class BlockContext
     {
         if (this.level.setBlock(this.pos, state, flags, recursionLeft))
         {
-            this.state = state;
+            this.updateState(state);
             return true;
         }
         
@@ -144,7 +135,7 @@ public class BlockContext
     {
         if (this.level.setBlock(this.pos, state, flags))
         {
-            this.state = state;
+            this.updateState(state);
             return true;
         }
         
@@ -155,7 +146,7 @@ public class BlockContext
     {
         if (this.level.setBlockAndUpdate(this.pos, state))
         {
-            this.state = state;
+            this.updateState(state);
             return true;
         }
         
@@ -166,7 +157,7 @@ public class BlockContext
     {
         if (this.level.destroyBlock(this.pos, shouldDrop, entity, recursionLeft))
         {
-            return this.update();
+            return this.update(true);
         }
         
         return false;
@@ -176,7 +167,7 @@ public class BlockContext
     {
         if (this.level.destroyBlock(this.pos, shouldDrop, entity))
         {
-            return this.update();
+            return this.update(true);
         }
         
         return false;
@@ -184,19 +175,29 @@ public class BlockContext
     
     public boolean destroy(final boolean shouldDrop) { return this.destroy(shouldDrop, null); }
     
-    public boolean update()
+    public boolean update(final boolean force)
     {
+        if (!this.hasChunk() && !force)
+        {
+            return false;
+        }
+        
         final BlockState old_state = this.state;
-        this.state = this.level.getBlockState(this.pos);
+        this.updateState(this.level.getBlockState(this.pos));
+        
         return (old_state != this.state);
     }
     
+    //------------------------------------------------------------------------------------------------------------------
+    protected void updateState(final BlockState state) { this.state = state; }
+    
     //==================================================================================================================
-    public boolean is(final TagKey<Block>    tag)    { return this.state.is(tag);    }
-    public boolean is(final Block            block)  { return this.state.is(block);  }
-    public boolean is(final Holder<Block>    block)  { return this.state.is(block);  }
+    public boolean is(final TagKey<Block> tag) { return this.state.is(tag); }
+    public boolean is(final Block block) { return this.state.is(block); }
+    public boolean is(final Holder<Block> block) { return this.state.is(block); }
     public boolean is(final HolderSet<Block> blocks) { return this.state.is(blocks); }
-    public boolean is(final BlockState       state)  { return (this.state == state); }
+    public boolean is(final BlockState state) { return (this.state == state); }
+    public boolean isAir() { return this.state.isAir(); }
     
     //==================================================================================================================
     public boolean isSolid() { return this.state.isRedstoneConductor(this.level, this.pos); }

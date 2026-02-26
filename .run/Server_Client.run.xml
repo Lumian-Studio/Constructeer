@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Server/Client" type="CompoundRunConfigurationType">
+    <toRun name="Constructeer Client" type="GradleRunConfiguration" />
+    <toRun name="Constructeer Server" type="GradleRunConfiguration" />
+    <method v="2" />
+  </configuration>
+</component>

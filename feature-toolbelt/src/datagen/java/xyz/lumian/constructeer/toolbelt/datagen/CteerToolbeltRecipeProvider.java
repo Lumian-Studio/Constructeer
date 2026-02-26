@@ -39,7 +39,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import org.jspecify.annotations.Nullable;
-import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItemTags;
+import xyz.lumian.constructeer.toolbelt.registry.CteerToolbeltTags;
 import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItems;
 import xyz.lumian.constructeer.toolbelt.item.recipe.ShapelessPouchRecipe;
 import xyz.lumian.constructeer.toolbelt.item.recipe.ToolbeltWithPouchRecipe;
@@ -79,12 +79,16 @@ public class CteerToolbeltRecipeProvider
                         Registries.RECIPE,
                         BuiltInRegistries.ITEM.getKey(CteerToolbeltItems.TOOLBELT));
                     
-                    this.output.accept(key, new ToolbeltWithPouchRecipe(RecipeBuilder.determineBookCategory(cat)),
+                    this.output.accept(
+                        key,
+                        new ToolbeltWithPouchRecipe(
+                            RecipeBuilder.determineBookCategory(cat),
+                            CteerToolbeltItems.TOOLBELT),
                         this.output.advancement()
                             .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(key))
                             .rewards(AdvancementRewards.Builder.recipe(key))
                             .requirements(AdvancementRequirements.Strategy.OR)
-                            .addCriterion("has_pouches", this.has(CteerToolbeltItemTags.POUCHES))
+                            .addCriterion("has_pouches", this.has(CteerToolbeltTags.POUCHES))
                             .build(key.identifier().withPrefix("recipes/" + cat.getFolderName() + "/")));
                 }
                 
@@ -130,7 +134,7 @@ public class CteerToolbeltRecipeProvider
                     
                     final HolderSet<Item> pouches = this.registries
                         .lookupOrThrow(Registries.ITEM)
-                        .getOrThrow(CteerToolbeltItemTags.POUCHES);
+                        .getOrThrow(CteerToolbeltTags.POUCHES);
                     TransmuteRecipeBuilder
                         .transmute(RecipeCategory.TOOLS, Ingredient.of(pouches), Ingredient.of(dye_item), pouch)
                         .group(base_id.getPath())

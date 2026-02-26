@@ -35,14 +35,8 @@ public final class CteerMultiMiningEnchantments
     public static final ResourceKey<Enchantment> PENETRATION = create("penetration");
     
     //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //==================================================================================================================
     public static ResourceKey<Enchantment> create(final String path)
     {
         return ResourceKey.create(Registries.ENCHANTMENT, CteerDefine.id(path));
     }
-    
-    //******************************************************************************************************************
-    private CteerMultiMiningEnchantments() {}
 }

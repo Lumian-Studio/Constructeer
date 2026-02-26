@@ -23,21 +23,19 @@ package xyz.lumian.constructeer.toolbelt.item.recipe;
 
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
+import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.registry.IBootstrap;
+import xyz.lumian.constructeer.registry.CteerRecipeSerialiserRegistry;
 
 
 
 //**********************************************************************************************************************
 public final class CteerToolbeltRecipeSerialisers
+    implements IBootstrap
 {
     //******************************************************************************************************************
-    public static final RecipeSerializer<ToolbeltWithPouchRecipe> TOOLBELT_WITH_POUCH    = RecipeSerializer
-        .register("crafting_special_toolbelt_with_pouch", new ToolbeltWithPouchRecipe.Serializer());
-    public static final RecipeSerializer<ShapelessRecipe>         SHAPELESS_POUCH_RECIPE = RecipeSerializer
-        .register("shapeless_pouch_recipe", new ShapelessPouchRecipe.Serializer());
-    
-    //******************************************************************************************************************
-    public static void initialise() { ToolbeltWithPouchRecipe.prepareHolders(); }
-    
-    //******************************************************************************************************************
-    private CteerToolbeltRecipeSerialisers() {}
+    public static final RecipeSerializer<ToolbeltWithPouchRecipe> TOOLBELT_WITH_POUCH    = CteerRecipeSerialiserRegistry
+        .register(CteerDefine.id("crafting_special_toolbelt_with_pouch"), new ToolbeltWithPouchRecipe.Serializer());
+    public static final RecipeSerializer<ShapelessRecipe>         SHAPELESS_POUCH_RECIPE = CteerRecipeSerialiserRegistry
+        .register(CteerDefine.id("shapeless_pouch_recipe"), new ShapelessPouchRecipe.Serializer());
 }

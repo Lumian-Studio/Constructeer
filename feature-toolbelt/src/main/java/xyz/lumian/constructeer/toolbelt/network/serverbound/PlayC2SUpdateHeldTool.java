@@ -32,10 +32,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.integration.accessory.AccessorySlot;
+import xyz.lumian.constructeer.integration.accessory.IAccessory;
 import xyz.lumian.constructeer.network.IHandleableServerPayload;
 import xyz.lumian.constructeer.toolbelt.CteerToolbeltDictionary;
-import xyz.lumian.constructeer.toolbelt.container.ToolbeltEquipmentSlot;
-import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItemTags;
+import xyz.lumian.constructeer.toolbelt.registry.CteerToolbeltTags;
 import xyz.lumian.constructeer.toolbelt.item.PouchItem;
 import xyz.lumian.constructeer.toolbelt.item.component.CteerToolbeltDataComponents;
 import xyz.lumian.constructeer.toolbelt.item.component.PouchContent;
@@ -48,10 +49,10 @@ import java.util.Optional;
 
 //**********************************************************************************************************************
 public record PlayC2SUpdateHeldTool(
-    ItemStack             toolStack,
-    ToolbeltEquipmentSlot toolbeltSlot,
-    ItemStack             toolbeltStack,
-    short                 swapSlotId
+    ItemStack     toolStack,
+    AccessorySlot toolbeltSlot,
+    ItemStack     toolbeltStack,
+    short         swapSlotId
 )
     implements IHandleableServerPayload<ServerPlayNetworking.Context>
 {
@@ -59,10 +60,10 @@ public record PlayC2SUpdateHeldTool(
     public static final Identifier ID = CteerDefine.id("toolbelt_update_held_tool");
     
     public static final StreamCodec<RegistryFriendlyByteBuf, PlayC2SUpdateHeldTool> CODEC = StreamCodec.composite(
-        ItemStack.OPTIONAL_STREAM_CODEC,    PlayC2SUpdateHeldTool::toolStack,
-        ToolbeltEquipmentSlot.STREAM_CODEC, PlayC2SUpdateHeldTool::toolbeltSlot,
-        ItemStack.STREAM_CODEC,             PlayC2SUpdateHeldTool::toolbeltStack,
-        ByteBufCodecs.SHORT,                PlayC2SUpdateHeldTool::swapSlotId,
+        ItemStack.OPTIONAL_STREAM_CODEC, PlayC2SUpdateHeldTool::toolStack,
+        AccessorySlot.streamCodec(IAccessory.SlotConstants.BELT), PlayC2SUpdateHeldTool::toolbeltSlot,
+        ItemStack.STREAM_CODEC, PlayC2SUpdateHeldTool::toolbeltStack,
+        ByteBufCodecs.SHORT, PlayC2SUpdateHeldTool::swapSlotId,
         PlayC2SUpdateHeldTool::new);
     
     //******************************************************************************************************************
@@ -114,7 +115,7 @@ public record PlayC2SUpdateHeldTool(
         }
         
         final Optional<ItemStack> pouch_optional = storage.getPouch(this.swapSlotId)
-            .filter(stack -> stack.is(CteerToolbeltItemTags.POUCHES));
+            .filter(stack -> stack.is(CteerToolbeltTags.POUCHES));
         
         if (pouch_optional.isEmpty())
         {

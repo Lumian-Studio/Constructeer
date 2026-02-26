@@ -26,7 +26,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import xyz.lumian.constructeer.CteerDefine;
-import xyz.lumian.constructeer.network.CteerNetwork;
+import xyz.lumian.constructeer.network.CteerNetworkRegistry;
 import xyz.lumian.constructeer.network.IHandleableServerPayload;
 
 
@@ -44,7 +44,7 @@ public class ConfigureC2SFeatureSyncAck
         = StreamCodec.unit(INSTANCE);
     
     //******************************************************************************************************************
-    @Override public Type<ConfigureC2SFeatureSyncAck> type() { return CteerNetwork.CONFIG_FEATURE_SYNC_ACK; }
+    @Override public Type<ConfigureC2SFeatureSyncAck> type() { return CteerNetworkRegistry.CONFIG_FEATURE_SYNC_ACK; }
     
     //==================================================================================================================
     @Override

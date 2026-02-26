@@ -22,9 +22,17 @@
 package xyz.lumian.constructeer;
 
 import net.fabricmc.api.ModInitializer;
-import xyz.lumian.constructeer.integration.Compat;
-import xyz.lumian.constructeer.network.CteerNetwork;
+import net.minecraft.core.registries.BuiltInRegistries;
+import org.intellij.lang.annotations.PrintFormat;
+import xyz.lumian.constructeer.config.CteerConfigManager;
+import xyz.lumian.constructeer.impl.BootstrapRegistryExtension;
+import xyz.lumian.constructeer.network.CteerNetworkRegistry;
+import xyz.lumian.constructeer.player.CteerPlayerAttachments;
+import xyz.lumian.constructeer.registry.BootstrapReport;
 import xyz.lumian.constructeer.registry.CteerItemRegistry;
+import xyz.lumian.constructeer.registry.IBootstrap;
+
+import java.util.function.Supplier;
 
 
 
@@ -33,11 +41,48 @@ public class Constructeer
     implements ModInitializer
 {
     //******************************************************************************************************************
+    public static final IBootstrap.Loader LOADER = IBootstrap.Loader.BEGIN
+        .with(CteerNetworkRegistry::new)
+        .with(CteerItemRegistry::new)
+        .with(IBootstrap.freezable(CteerConfigManager.class, CteerConfigManager::freeze))
+        .with(CteerPlayerAttachments::new);
+    
+    //------------------------------------------------------------------------------------------------------------------
+    @SuppressWarnings("InstantiationOfUtilityClass")
+    private static final BootstrapRegistryExtension BOOTSTRAP_REGISTRY
+        = ((BootstrapRegistryExtension) new BuiltInRegistries());
+    
+    //******************************************************************************************************************
+    public static IBootstrap.Loader registerBootstrapper(final IBootstrap.Loader loader)
+    {
+        Constructeer.BOOTSTRAP_REGISTRY.constructeer$registerBootstrapper(loader);
+        return loader;
+    }
+    
+    public static void sendGlobalBootstrapReport(final Supplier<String> message)
+    {
+        final BootstrapReport report = Constructeer.BOOTSTRAP_REGISTRY.constructeer$getCurrentReport();
+        
+        if (report != null)
+        {
+            report.report(message);
+        }
+    }
+    
+    public static void sendGlobalBootstrapReport(@PrintFormat final String message, final Object ...args)
+    {
+        final BootstrapReport report = Constructeer.BOOTSTRAP_REGISTRY.constructeer$getCurrentReport();
+        
+        if (report != null)
+        {
+            report.report(message, args);
+        }
+    }
+    
+    //******************************************************************************************************************
 	@Override
 	public void onInitialize()
     {
-        CteerNetwork     .initialise();
-        Compat           .initialise();
-        CteerItemRegistry.initialise();
+        Constructeer.registerBootstrapper(Constructeer.LOADER);
 	}
 }

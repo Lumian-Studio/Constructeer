@@ -28,31 +28,17 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.registry.CteerDataComponentRegistry;
+import xyz.lumian.constructeer.registry.CteerRegistries;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerDataComponentPredicates
+    implements IBootstrap
 {
     //******************************************************************************************************************
     public static final DataComponentPredicate.Type<PouchPredicate> POUCH_CONTENT
-        = register("pouch_content", PouchPredicate.CODEC);
-    
-    //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //==================================================================================================================
-    private static <T extends DataComponentPredicate> DataComponentPredicate.Type<T> register(
-        final String   path,
-        final Codec<T> codec
-    )
-    {
-		return Registry.register(
-            BuiltInRegistries.DATA_COMPONENT_PREDICATE_TYPE,
-            ResourceKey.create(Registries.DATA_COMPONENT_PREDICATE_TYPE, CteerDefine.id(path)),
-            new DataComponentPredicate.ConcreteType<>(codec));
-	}
-    
-    //******************************************************************************************************************
-    private CteerDataComponentPredicates() {}
+        = CteerDataComponentRegistry.registerPredicate(CteerDefine.id("pouch_content"), PouchPredicate.CODEC);
 }

@@ -37,20 +37,16 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.multimining.MultiMiningDefine;
-import xyz.lumian.constructeer.multimining.client.config.CteerMultiMiningClientConfig;
+import xyz.lumian.constructeer.multimining.client.registry.CteerMultiMiningOutlineRenderRegistry;
 import xyz.lumian.constructeer.multimining.item.component.CteerMultiMiningDataComponents;
 import xyz.lumian.constructeer.multimining.item.multimining.IMultiMining;
 import xyz.lumian.constructeer.multimining.item.multimining.MultiMining;
-import xyz.lumian.constructeer.multimining.item.multimining.MultiMiningType;
 import xyz.lumian.constructeer.level.BlockContext;
-import xyz.lumian.constructeer.util.FreezableMap;
 
 import java.util.*;
-import java.util.function.BooleanSupplier;
-import java.util.function.Function;
-import java.util.function.IntSupplier;
 
 
 
@@ -63,6 +59,9 @@ public enum MultiMiningOutlineRenderer
     public interface Renderer
     {
         //**************************************************************************************************************
+        boolean canUseRenderer();
+        
+        //==============================================================================================================
         void addBlocks(BlockContext mainBlock, Collection<BlockContext> blocks);
         
         //==============================================================================================================
@@ -84,6 +83,8 @@ public enum MultiMiningOutlineRenderer
         
         //**************************************************************************************************************
         public int getOutlineColourRGB() { return 0xFF000000; }
+        
+        @Override public boolean canUseRenderer() { return (this.getOutlineColourRGB() != 0); }
         
         //==============================================================================================================
         @Override
@@ -130,35 +131,6 @@ public enum MultiMiningOutlineRenderer
         }
     }
     
-    private final static class ConfigBackedShapedRenderer
-        extends ShapedRenderer
-    {
-        //**************************************************************************************************************
-        private final BooleanSupplier renderSwitch;
-        private final IntSupplier     colourGetter;
-        
-        //**************************************************************************************************************
-        public ConfigBackedShapedRenderer(
-            final Function<CteerMultiMiningClientConfig, BooleanSupplier> renderSwitch,
-            final Function<CteerMultiMiningClientConfig, IntSupplier>     colourGetter)
-        {
-            this.renderSwitch = renderSwitch.apply(CteerMultiMiningClientConfig.INSTANCE);
-            this.colourGetter = colourGetter.apply(CteerMultiMiningClientConfig.INSTANCE);
-        }
-        
-        //==============================================================================================================
-        @Override
-        public int getOutlineColourRGB()
-        {
-            if (this.renderSwitch.getAsBoolean())
-            {
-                return (0xFF000000 | this.colourGetter.getAsInt());
-            }
-            
-            return 0;
-        }
-    }
-    
     private static class RenderState
     {
         //**************************************************************************************************************
@@ -197,61 +169,24 @@ public enum MultiMiningOutlineRenderer
     }
     
     //******************************************************************************************************************
-    private static final FreezableMap<MultiMiningType<?>, Renderer> RENDERERS
-        = new FreezableMap<>(new IdentityHashMap<>());
-    
-    //==================================================================================================================
-    static
-    {
-        registerRenderer(MultiMiningType.BUILTIN_HAMMER, new ConfigBackedShapedRenderer(
-            (config -> config.shouldRenderHammerOutline),
-            (config -> config.hammerOutlineColour)));
-        registerRenderer(MultiMiningType.BUILTIN_PLOW, new ConfigBackedShapedRenderer(
-            (config -> config.shouldRenderPlowOutline),
-            (config -> config.plowOutlineColour)));
-        registerRenderer(MultiMiningType.BUILTIN_SAW, new ConfigBackedShapedRenderer(
-            (config -> config.shouldRenderSawOutline),
-            (config -> config.sawOutlineColour)));
-        registerRenderer(MultiMiningType.CUSTOM, new ShapedRenderer());
-    }
-    
-    //******************************************************************************************************************
-    public static void registerRenderer(final MultiMiningType<?> type, final Renderer renderer)
-    {
-        if (MultiMiningOutlineRenderer.RENDERERS.put(type, renderer) != null)
-        {
-            throw new IllegalStateException("renderer for type " + type + " is already registered");
-        }
-    }
-    
-    //******************************************************************************************************************
     private final RenderState state = new RenderState();
     
-    private           int       ticks        = 0;
-    private           boolean   initialised  = false;
-    private           boolean   prevSneaking = false;
     private @Nullable Direction prevFace     = null;
+    private           int       ticks        = 0;
+    private           boolean   prevSneaking = false;
     
     //******************************************************************************************************************
+    @ApiStatus.Internal
     public void initialise()
     {
-        if (this.initialised)
-        {
-            return;
-        }
-        
         ClientTickEvents .START_CLIENT_TICK   .register(this::tick);
         WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((ctx, state) ->
         {
             this.renderOutline(ctx, state);
             return true;
         });
-        
-        MultiMiningOutlineRenderer.RENDERERS.freeze();
-        this.initialised = true;
     }
     
-    //==================================================================================================================
     public void tick(final Minecraft client)
     {
         if (client.level != null)
@@ -293,9 +228,9 @@ public enum MultiMiningOutlineRenderer
             this.prevFace     = face;
             this.prevSneaking = sneak;
             
-            final Renderer renderer = MultiMiningOutlineRenderer.RENDERERS.get(mm.type());
+            final Renderer renderer = CteerMultiMiningOutlineRenderRegistry.get(mm.type());
         
-            if (renderer == null)
+            if (renderer == null || !renderer.canUseRenderer())
             {
                 return;
             }

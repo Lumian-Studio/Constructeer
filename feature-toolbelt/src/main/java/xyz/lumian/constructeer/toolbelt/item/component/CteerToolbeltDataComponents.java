@@ -22,34 +22,22 @@
 package xyz.lumian.constructeer.toolbelt.item.component;
 
 import net.minecraft.core.component.DataComponentType;
+import xyz.lumian.constructeer.CteerDefine;
 import xyz.lumian.constructeer.registry.CteerDataComponentRegistry;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerToolbeltDataComponents
+    implements IBootstrap
 {
     //******************************************************************************************************************
     public static final DataComponentType<ToolbeltStorage> TOOLBELT_STORAGE = CteerDataComponentRegistry.register(
-        "toolbelt_storage",
-        DataComponentType
-            .<ToolbeltStorage>builder()
-            .persistent(ToolbeltStorage.CODEC)
-            .networkSynchronized(ToolbeltStorage.STREAM_CODEC)
-            .build());
+        CteerDefine.id("toolbelt_storage"),
+        (b -> b.persistent(ToolbeltStorage.CODEC).networkSynchronized(ToolbeltStorage.STREAM_CODEC)));
     
     public static final DataComponentType<PouchContent> POUCH_CONTENT = CteerDataComponentRegistry.register(
-        "pouch_content",
-        DataComponentType
-            .<PouchContent>builder()
-            .persistent(PouchContent.CODEC)
-            .networkSynchronized(PouchContent.STREAM_CODEC)
-            .cacheEncoding()
-            .build());
-    
-    //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //******************************************************************************************************************
-    private CteerToolbeltDataComponents() {}
+        CteerDefine.id("pouch_content"),
+        (b -> b.persistent(PouchContent.CODEC).networkSynchronized(PouchContent.STREAM_CODEC).cacheEncoding()));
 }

@@ -26,7 +26,7 @@ import net.minecraft.core.HolderLookup;
 import org.apache.commons.lang3.text.WordUtils;
 import xyz.lumian.constructeer.data.IDictionary;
 import xyz.lumian.constructeer.toolbelt.CteerToolbeltDictionary;
-import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItemTags;
+import xyz.lumian.constructeer.toolbelt.registry.CteerToolbeltTags;
 import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItems;
 
 import java.util.concurrent.CompletableFuture;
@@ -49,7 +49,7 @@ public class EnUs
     public void generateAdditional(final HolderLookup.Provider lookup, final TranslationBuilder builder)
     {
         // Tags
-        builder.add(CteerToolbeltItemTags.POUCHES, "Pouches");
+        builder.add(CteerToolbeltTags.POUCHES, "Pouches");
         
         // Items
         builder.add(CteerToolbeltItems.TOOLBELT, "Toolbelt");

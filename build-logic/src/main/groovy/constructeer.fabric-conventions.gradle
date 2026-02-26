@@ -1,0 +1,214 @@
+plugins {
+    id 'net.fabricmc.fabric-loom-remap'
+    id 'com.github.gmazzo.buildconfig'
+}
+
+group = project.mod_package
+
+def module_id   = project.mod_id
+def module_name = project.mod_name
+
+if (project.hasProperty('module_id'))
+{
+    if (!project.hasProperty('module_name'))
+    {
+        throw new InvalidUserCodeException("gradle name is not defined for project '${rootProject.name}'")
+    }
+
+    module_id   += "-${project.module_id}"
+    module_name += " ${project.module_name}"
+
+    version = features[project.module_id].get().version
+}
+else
+{
+    version = features.versions.constructeer.get()
+}
+
+base { archivesName = "${module_id}" }
+
+repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+
+    maven {
+        name = 'ParchmentMC'
+        url  = 'https://maven.parchmentmc.org'
+    }
+
+    maven { url = "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
+
+    maven { url "https://maven.shedaniel.me/" }
+
+    maven {
+        name = "Fuzs Mod Resources"
+        url  = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+    }
+
+    maven {
+		name = "Ladysnake Libs"
+		url = 'https://maven.ladysnake.org/releases'
+	}
+
+    maven {
+        name = "Terraformers"
+        url  = "https://maven.terraformersmc.com/"
+    }
+
+    maven {
+		name = "Nucleoid"
+		url = 'https://maven.nucleoid.xyz/releases'
+        metadataSources {
+            artifact()
+        }
+	}
+
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'GeckoLib'
+                url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+            }
+        }
+        filter { includeGroupAndSubgroups('software.bernie.geckolib') }
+    }
+}
+
+dependencies {
+    minecraft libs.minecraft
+
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment libs.parchment
+    }
+
+    if (project.devauth.toBoolean())
+    {
+        modRuntimeOnly libs.devauth
+    }
+
+    if (project.is_source.toBoolean())
+    {
+        annotationProcessor libs.manifold.pp
+    }
+
+    modImplementation libs.fabric.loader
+    modImplementation libs.fabric.api
+    modImplementation libs.modmenu
+    modImplementation(libs.clothconfig) {
+		exclude(group: "net.fabricmc.fabric-api")
+	}
+
+    modApi libs.forgeconfig
+}
+
+tasks.withType(GenerateModuleMetadata).configureEach {
+    enabled = false
+}
+
+final def java_version = libs.versions.java.get().toInteger()
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = java_version
+    it.options.compilerArgs << '-Xplugin:Manifold'
+    it.options.compilerArgs << '-AFABRIC'
+
+    final def mc_ver = libs.versions.minecraft.get().replace('.', '_')
+    it.options.compilerArgs << ('-AMC' + mc_ver)
+}
+
+java {
+	withSourcesJar()
+
+    sourceCompatibility = java_version
+	targetCompatibility = java_version
+}
+
+loom.runs.configureEach {
+    vmArgs("-enableassertions", "-Dmixin.debug.verify=true", "-Dmixin.debug.countInjections=true")
+}
+
+loom.log4jConfigs.from "log4j-dev.xml"
+
+processResources {
+    inputs.property "version",                       project.version
+    inputs.property "name",                          module_name
+    inputs.property "minecraft_version",             libs.minecraft.get().version
+    inputs.property "java_version",                  java_version
+    inputs.property "fabric_loader_version",         ">=${libs.fabric.loader.get().version}"
+    inputs.property "forge_config_api_port_version", "~${libs.forgeconfig.get().version}"
+    inputs.property "fabric_api_version",            "*"
+
+    inputs.property "mod_id",   project.mod_id
+    inputs.property "mod_name", project.mod_name
+    inputs.property "mod_desc", "Definitely the Minecraft mod of all time. Build fast, die young!"
+
+    filesMatching("fabric.mod.json") {
+        expand "version":                       inputs.properties.version,
+               "name":                          inputs.properties.name,
+               "minecraft_version":             inputs.properties.minecraft_version,
+               "java_version":                  inputs.properties.java_version,
+               "fabric_loader_version":         inputs.properties.fabric_loader_version,
+               "forge_config_api_port_version": inputs.properties.forge_config_api_port_version,
+               "fabric_api_version":            inputs.properties.fabric_api_version,
+
+                "mod_id":   inputs.properties.mod_id,
+                "mod_name": inputs.properties.mod_name,
+                "mod_desc": inputs.properties.mod_desc
+    }
+}
+jar {
+    inputs.property "archivesName", project.base.archivesName
+    from(rootProject.file("LICENSE.md"))
+}
+
+if (!project.is_source.toBoolean())
+{
+    return
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        "${module_id}" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+
+    runConfigs.configureEach {
+		ideConfigGenerated = true
+	}
+}
+
+if (project.build_define.toBoolean())
+{
+    buildConfig {
+        final def pkg = (project.group + '.' + project.module_id);
+
+        forClass(pkg, "ModuleDefine") {
+            buildConfigField String.class, 'ID',      project.module_id
+            buildConfigField String.class, 'NAME',    project.module_name
+            buildConfigField String.class, 'PACKAGE', pkg
+        }
+    }
+}
+
+if (project.do_datagen.toBoolean())
+{
+    fabricApi {
+        configureDataGeneration {
+            client          = true
+            createSourceSet = true
+            modId           = project.mod_id
+
+            tasks.withType(JavaCompile).configureEach {
+                it.options.compilerArgs -= '-Xplugin:Manifold'
+            }
+        }
+    }
+}
+

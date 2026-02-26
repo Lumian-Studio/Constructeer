@@ -39,13 +39,14 @@ public class CteerMultiMiningEnchantmentProvider
     extends FabricDynamicRegistryProvider
 {
     //******************************************************************************************************************
-    public CteerMultiMiningEnchantmentProvider(final FabricDataOutput output, final CompletableFuture<HolderLookup.Provider> future)
+    public CteerMultiMiningEnchantmentProvider(final FabricDataOutput                         output,
+                                               final CompletableFuture<HolderLookup.Provider> future)
     {
         super(output, future);
     }
     
     //==================================================================================================================
-    @Override public String getName() { return "Constructeer Multi-Mining Enchantment Provider"; }
+    @Override public String getName() { return "Constructeer Multi Mining Enchantment Provider"; }
     
     //==================================================================================================================
     @Override

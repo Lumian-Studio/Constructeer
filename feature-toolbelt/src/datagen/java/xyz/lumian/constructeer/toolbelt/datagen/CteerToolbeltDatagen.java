@@ -42,7 +42,7 @@ public class CteerToolbeltDatagen
         
         pack.addProvider(CteerToolbeltModelProvider::new);
         pack.addProvider(CteerToolbeltRecipeProvider::new);
-        pack.addProvider(CteerToolbeltEquipmentAssetProvider::new);
+        pack.addProvider(CteerToolbeltTrinketProvider::new);
         
         // Langs
         pack.addProvider(IDictionary.makeCustomFactoryWithDefaults(CteerToolbeltDictionary.values(), EnUs::new));

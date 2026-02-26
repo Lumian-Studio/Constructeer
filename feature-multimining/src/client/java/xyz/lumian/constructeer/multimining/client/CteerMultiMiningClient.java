@@ -23,12 +23,14 @@ package xyz.lumian.constructeer.multimining.client;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.neoforged.fml.config.ModConfig;
+import xyz.lumian.constructeer.Constructeer;
 import xyz.lumian.constructeer.CteerDefine;
 import xyz.lumian.constructeer.config.CteerConfigManager;
 import xyz.lumian.constructeer.multimining.ModuleDefine;
 import xyz.lumian.constructeer.multimining.client.config.CteerMultiMiningClientConfig;
-import xyz.lumian.constructeer.multimining.client.renderer.MultiMiningOutlineRenderer;
+import xyz.lumian.constructeer.multimining.client.registry.CteerMultiMiningOutlineRenderRegistry;
 import xyz.lumian.constructeer.multimining.client.renderer.entity.CteerMultiMiningEntityRenderers;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
@@ -37,14 +39,18 @@ public class CteerMultiMiningClient
     implements ClientModInitializer
 {
     //******************************************************************************************************************
+    public static final IBootstrap.Loader LOADER = IBootstrap.Loader.BEGIN
+        .with(CteerMultiMiningOutlineRenderRegistry::new)
+        .with(CteerMultiMiningEntityRenderers::new);
+    
+    //******************************************************************************************************************
 	@Override
 	public void onInitializeClient()
     {
+        Constructeer.registerBootstrapper(CteerMultiMiningClient.LOADER);
         CteerConfigManager.INSTANCE.registerConfig(
             CteerDefine.id(ModuleDefine.ID),
             ModConfig.Type.CLIENT,
             CteerMultiMiningClientConfig.SPEC);
-        MultiMiningOutlineRenderer.INSTANCE.initialise();
-        CteerMultiMiningEntityRenderers.initialise();
 	}
 }

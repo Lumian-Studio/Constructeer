@@ -24,13 +24,17 @@ package xyz.lumian.constructeer.toolbelt.client.mixin;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.world.entity.Avatar;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import xyz.lumian.constructeer.integration.Compat;
+import xyz.lumian.constructeer.integration.accessory.IAccessory;
 import xyz.lumian.constructeer.toolbelt.client.renderer.state.CteerToolbeltRenderDataKeys;
 import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItems;
+import xyz.lumian.constructeer.toolbelt.registry.CteerToolbeltTags;
 
 
 
@@ -46,11 +50,17 @@ public abstract class AvatarRendererMixin
                                    final CallbackInfo ci)
     {
         state.setData(CteerToolbeltRenderDataKeys.LIVING_FALL_DISTANCE, avatar.fallDistance);
-        final ItemStack equipment = state.legsEquipment;
         
-        if (equipment.is(CteerToolbeltItems.TOOLBELT))
+        final IAccessory accessory = Compat.getAccessory().orElse(null);
+        
+        if (accessory == null || !(avatar instanceof Player player))
         {
-            state.setData(CteerToolbeltRenderDataKeys.HUMANOID_TOOLBELT_EQUIPMENT, equipment);
+            return;
+        }
+        
+        if (accessory.isEquipped(IAccessory.SlotConstants.BELT, player, CteerToolbeltItems.TOOLBELT, false))
+        {
+            state.setData(CteerToolbeltRenderDataKeys.HAS_ACCESSORY, true);
         }
     }
 }

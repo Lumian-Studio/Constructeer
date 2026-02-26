@@ -28,25 +28,24 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.integration.accessory.AccessorySlot;
+import xyz.lumian.constructeer.integration.accessory.IAccessory;
 import xyz.lumian.constructeer.network.IHandleableServerPayload;
-import xyz.lumian.constructeer.integration.trinkets.AbstractExtendedEquipmentSlot;
-import xyz.lumian.constructeer.toolbelt.container.ToolbeltEquipmentSlot;
 import xyz.lumian.constructeer.toolbelt.item.ToolbeltItem;
 import xyz.lumian.constructeer.toolbelt.network.CteerToolbeltPayloads;
 
 
 
 //**********************************************************************************************************************
-public record PlayC2SOpenToolbeltConfig(ToolbeltEquipmentSlot slot)
+public record PlayC2SOpenToolbeltConfig(AccessorySlot slot)
     implements IHandleableServerPayload<ServerPlayNetworking.Context>
 {
     //******************************************************************************************************************
     public static final Identifier ID = CteerDefine.id("toolbelt_config");
     
-    public static final StreamCodec<RegistryFriendlyByteBuf, PlayC2SOpenToolbeltConfig> CODEC = StreamCodec
-        .composite(
-            ToolbeltEquipmentSlot.STREAM_CODEC, PlayC2SOpenToolbeltConfig::slot,
-            PlayC2SOpenToolbeltConfig::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, PlayC2SOpenToolbeltConfig> CODEC = StreamCodec.composite(
+        AccessorySlot.streamCodec(IAccessory.SlotConstants.BELT), PlayC2SOpenToolbeltConfig::slot,
+        PlayC2SOpenToolbeltConfig::new);
     
     //******************************************************************************************************************
     @Override public Type<? extends CustomPacketPayload> type() { return CteerToolbeltPayloads.OPEN_TOOLBELT_SCREEN; }

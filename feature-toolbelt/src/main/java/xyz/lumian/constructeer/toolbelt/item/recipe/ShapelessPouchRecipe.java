@@ -34,7 +34,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
-import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItemTags;
+import xyz.lumian.constructeer.toolbelt.registry.CteerToolbeltTags;
 import xyz.lumian.constructeer.toolbelt.item.PouchItem;
 import xyz.lumian.constructeer.toolbelt.item.component.CteerToolbeltDataComponents;
 import xyz.lumian.constructeer.toolbelt.item.component.PouchContent;
@@ -94,6 +94,8 @@ public class ShapelessPouchRecipe
                 Ingredient.CONTENTS_STREAM_CODEC.apply(ByteBufCodecs.list(9)), (recipe -> recipe.ingredients),
                 ShapelessPouchRecipe::new)
                 .map(Function.identity(), (shapeless -> (ShapelessPouchRecipe) shapeless));
+            
+            ShapelessPouchRecipe.initialise();
         }
         
         //**************************************************************************************************************
@@ -105,6 +107,9 @@ public class ShapelessPouchRecipe
             return Serializer.STREAM_CODEC;
         }
 	}
+    
+    //******************************************************************************************************************
+    private static void initialise() {}
     
     //******************************************************************************************************************
     private final ItemStack        result;
@@ -142,7 +147,7 @@ public class ShapelessPouchRecipe
     @Override
     public boolean matches(final CraftingInput craftingInput, final Level level)
     {
-        if (!this.result.is(CteerToolbeltItemTags.POUCHES) || !super.matches(craftingInput, level))
+        if (!this.result.is(CteerToolbeltTags.POUCHES) || !super.matches(craftingInput, level))
         {
             return false;
         }

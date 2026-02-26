@@ -1,7 +1,5 @@
 plugins {
-    id 'constructeer.mod-conventions'
+    id 'constructeer.fabric-conventions'
 }
 
-dependencies {
-	implementation project(path: ':feature-core', configuration: 'namedElements')
-}
+addFeature project, features.core

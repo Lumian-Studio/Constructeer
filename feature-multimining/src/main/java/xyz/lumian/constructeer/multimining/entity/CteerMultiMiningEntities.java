@@ -21,39 +21,24 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.multimining.entity;
 
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.registry.CteerEntityRegistry;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerMultiMiningEntities
+    implements IBootstrap
 {
     //******************************************************************************************************************
-    public static final EntityType<FallingObjectEntity> FALLING_OBJECT = register(
-        "falling_object",
+    public static final EntityType<FallingObjectEntity> FALLING_OBJECT = CteerEntityRegistry.register(
+        CteerDefine.id("falling_object"),
         EntityType.Builder
             .of(FallingObjectEntity::new, MobCategory.MISC)
             .sized(1.0F, 1.0F)
             .clientTrackingRange(10)
             .updateInterval(1));
-    
-    //******************************************************************************************************************
-    public static void initialise() { CteerMultiMiningDataSerialisers.initialise(); }
-    
-    //==================================================================================================================
-    private static <T extends Entity> EntityType<T> register(final String name, final EntityType.Builder<T> type)
-    {
-        final ResourceKey<EntityType<?>> key = ResourceKey.create(Registries.ENTITY_TYPE, CteerDefine.id(name));
-        return Registry.register(BuiltInRegistries.ENTITY_TYPE, key, type.build(key));
-    }
-    
-    //******************************************************************************************************************
-    private CteerMultiMiningEntities() {}
 }

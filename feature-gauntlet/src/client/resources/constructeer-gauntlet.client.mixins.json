@@ -1,0 +1,9 @@
+{
+	"required": true,
+	"package": "xyz.lumian.constructeer.gauntlet.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [ "AvatarRendererMixin", "ItemInHandRendererMixin", "PlayerModelMixin", "PortableTypeMixin" ],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

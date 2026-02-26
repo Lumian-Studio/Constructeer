@@ -9,10 +9,28 @@ pluginManagement {
 	}
 }
 
+dependencyResolutionManagement {
+	versionCatalogs {
+		create('features') {
+			from(files('gradle/features.versions.toml'))
+		}
+	}
+}
+
+def feature_modules = [
+	'core',
+	'multimining',
+	'toolbelt',
+	'gauntlet'
+]
+
 rootProject.name = "constructeer"
 
 includeBuild('build-logic')
-include('feature-core')
-include('feature-multimining')
-include('feature-toolbelt')
-include('bundle')
+include('platform-fabric')
+
+feature_modules.each { name ->
+	final def project_name = "feature-${name}"
+	include(project_name)
+	project(":${project_name}").name = "${rootProject.name}-${name}"
+}

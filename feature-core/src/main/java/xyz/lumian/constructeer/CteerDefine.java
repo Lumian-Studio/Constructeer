@@ -32,6 +32,26 @@ import org.slf4j.LoggerFactory;
 public final class CteerDefine
 {
     //******************************************************************************************************************
+    public static final class Integrations
+    {
+        //**************************************************************************************************************
+        /// Accessory slots (e.g. Curios API, Trinkets, Accessories etc.)
+        public static final String ACCESSORY =
+        #if FABRIC
+            "trinkets"
+        #elif FORGE || NEOFORGE
+            "curios"
+        #endif
+            ;
+        
+        /// Config screens (e.g. Cloth Config)
+        public static final String CONFIG_SCREEN = "clothconfig";
+        
+        //**************************************************************************************************************
+        private Integrations() {}
+    }
+    
+    //******************************************************************************************************************
     /// The id of the mod, usually used for [Identifier] objects.
     public static final String MOD_ID = CteerAutoDefine.ID;
     

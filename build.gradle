@@ -1,42 +1,6 @@
-allprojects {
-    repositories {
-		maven {
-			name = 'Fabric'
-			url = 'https://maven.fabricmc.net/'
-		}
-
-		maven {
-			name = 'ParchmentMC'
-			url  = 'https://maven.parchmentmc.org'
-		}
-
-		maven { url "https://maven.shedaniel.me/" }
-
-		maven {
-			name = "Fuzs Mod Resources"
-			url  = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
-		}
-
-		maven {
-			name = "Terraformers"
-			url  = "https://maven.terraformersmc.com/"
-		}
-
-		exclusiveContent {
-			forRepository {
-				maven {
-					name = "Modrinth"
-					url = "https://api.modrinth.com/maven"
-				}
-			}
-			filter {
-				includeGroup "maven.modrinth"
-			}
-		}
-
-		maven {
-			name = "Ladysnake Mods"
-			url = 'https://maven.ladysnake.org/releases'
-		}
-	}
+static def addFeature(proj, lib)
+{
+    proj.dependencies {
+        implementation project(path: ":${lib.get().name}", configuration: 'namedElements')
+    }
 }

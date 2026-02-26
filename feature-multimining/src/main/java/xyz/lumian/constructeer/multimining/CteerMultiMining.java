@@ -22,17 +22,20 @@
 package xyz.lumian.constructeer.multimining;
 
 import net.fabricmc.api.ModInitializer;
+import xyz.lumian.constructeer.Constructeer;
 import xyz.lumian.constructeer.CteerDefine;
 import xyz.lumian.constructeer.config.CteerConfigManager;
 import xyz.lumian.constructeer.multimining.config.CteerMultiMiningServerConfig;
+import xyz.lumian.constructeer.multimining.entity.CteerMultiMiningDataSerialisers;
 import xyz.lumian.constructeer.multimining.entity.CteerMultiMiningEntities;
 import xyz.lumian.constructeer.multimining.item.CteerMultiMiningItems;
 import xyz.lumian.constructeer.multimining.item.component.CteerMultiMiningDataComponents;
-import xyz.lumian.constructeer.multimining.item.multimining.area.AreaProviderType;
+import xyz.lumian.constructeer.multimining.item.multimining.area.CteerAreaProviderTypes;
 import xyz.lumian.constructeer.multimining.item.multimining.timber.TimberMode;
 import xyz.lumian.constructeer.multimining.registry.CteerMultiMiningRegistries;
 import xyz.lumian.constructeer.multimining.sound.CteerMultiMiningSoundEvents;
 import xyz.lumian.constructeer.multimining.stat.CteerMultiMiningStats;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
@@ -41,23 +44,24 @@ public class CteerMultiMining
     implements ModInitializer
 {
     //******************************************************************************************************************
+    public static final IBootstrap.Loader LOADER = IBootstrap.Loader.BEGIN
+        .with(CteerMultiMiningRegistries::new)
+        .with(CteerMultiMiningDataComponents::new)
+        .with(CteerMultiMiningItems::new)
+        .with(CteerMultiMiningStats::new)
+        .with(CteerMultiMiningEntities::new)
+        .with(CteerMultiMiningDataSerialisers::new)
+        .with(CteerMultiMiningSoundEvents::new)
+        .with(CteerAreaProviderTypes::new)
+        .with(IBootstrap.bootstrappable(TimberMode.class, (report -> TimberMode.initialise())));
+    
+    //******************************************************************************************************************
 	@Override
     public void onInitialize()
     {
-        CteerDefine.LOGGER.info("Loading 'Multi Mining' extension");
-        
+        Constructeer.registerBootstrapper(CteerMultiMining.LOADER);
         CteerConfigManager.INSTANCE.registerReloadableConfig(
             CteerDefine.id(ModuleDefine.ID),
             CteerMultiMiningServerConfig.INSTANCE);
-        CteerMultiMiningRegistries    .initialise();
-        CteerMultiMiningDataComponents.initialise();
-        CteerMultiMiningItems         .initialise();
-        CteerMultiMiningStats         .initialise();
-        CteerMultiMiningEntities      .initialise();
-        CteerMultiMiningSoundEvents   .initialise();
-        AreaProviderType              .initialise();
-        TimberMode                    .initialise();
-        
-        CteerDefine.LOGGER.info("Loaded 'Multi Mining' successfully");
     }
 }

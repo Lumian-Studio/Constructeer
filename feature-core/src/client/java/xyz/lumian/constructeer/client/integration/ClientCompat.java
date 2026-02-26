@@ -21,8 +21,11 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.client.integration;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jspecify.annotations.Nullable;
+import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.client.integration.accessory.IAccessoryRenderRegistry;
 import xyz.lumian.constructeer.integration.Compat;
-import xyz.lumian.constructeer.registry.CteerRegistryEvents;
 
 
 
@@ -30,14 +33,18 @@ import xyz.lumian.constructeer.registry.CteerRegistryEvents;
 public final class ClientCompat
 {
     //******************************************************************************************************************
-    public static void initialise()
-    {
-        CteerRegistryEvents.MC_REGISTRIES_FROZEN_AFTER.register(() -> Compat.loadStaticIntegration(
-            "trinkets",
-            "xyz.lumian.constructeer.client.integration.trinkets.TrinketRenderingIntegration",
-            Compat.class.getClassLoader()));
-    }
+    @ApiStatus.Internal
+    public static final @Nullable IAccessoryRenderRegistry ACCESSORY_RENDER_REGISTRY;
     
-    //******************************************************************************************************************
-    private ClientCompat() {}
+    //==================================================================================================================
+    static
+    {
+        ACCESSORY_RENDER_REGISTRY = Compat
+            .loadIntegrationClass(
+                CteerDefine.Integrations.ACCESSORY,
+                ("xyz.lumian.constructeer.client.integration.accessory.AccessoryRenderRegistry_"
+                    + CteerDefine.Integrations.ACCESSORY),
+                IAccessoryRenderRegistry.class)
+            .orElse(null);
+    }
 }

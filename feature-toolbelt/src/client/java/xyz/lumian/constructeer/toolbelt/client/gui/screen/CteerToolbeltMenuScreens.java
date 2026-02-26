@@ -21,23 +21,21 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.toolbelt.client.gui.screen;
 
-import net.minecraft.client.gui.screens.MenuScreens;
+import xyz.lumian.constructeer.client.registry.CteerMenuScreenRegistry;
+import xyz.lumian.constructeer.registry.BootstrapReport;
+import xyz.lumian.constructeer.registry.IBootstrap;
 import xyz.lumian.constructeer.toolbelt.container.CteerToolbeltMenus;
 
 
 
 //**********************************************************************************************************************
 public final class CteerToolbeltMenuScreens
+    implements IBootstrap
 {
     //******************************************************************************************************************
-    static
+    @Override
+    public void bootstrap(final BootstrapReport report)
     {
-        MenuScreens.register(CteerToolbeltMenus.TOOLBELT, ToolbeltScreen::new);
+        CteerMenuScreenRegistry.register(CteerToolbeltMenus.TOOLBELT, ToolbeltScreen::new);
     }
-    
-    //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //******************************************************************************************************************
-    private CteerToolbeltMenuScreens() {}
 }

@@ -223,7 +223,11 @@ public class TreeDetectionProvider
     }
     
     //==================================================================================================================
-    @Override public AreaProviderType<? extends IAreaProvider> type() { return AreaProviderType.TREE_DETECTION; }
+    @Override
+    public IAreaProvider.Type<? extends IAreaProvider> type()
+    {
+        return CteerAreaProviderTypes.TREE_DETECTION;
+    }
     
     //==================================================================================================================
     @Override

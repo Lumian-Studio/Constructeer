@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Loggers>
+        <Logger name="constructeer" level="DEBUG" additivity="false">
+            <AppenderRef ref="SysOut"/>
+            <AppenderRef ref="ServerGuiConsole"/>
+        </Logger>
+        <Logger name="constructeer-bootstrap" level="DEBUG" additivity="false">
+            <AppenderRef ref="SysOut"/>
+            <AppenderRef ref="ServerGuiConsole"/>
+            <ThresholdFilter level="DEBUG"/>
+        </Logger>
+    </Loggers>
+</Configuration>

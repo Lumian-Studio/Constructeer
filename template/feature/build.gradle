@@ -1,0 +1,10 @@
+plugins {
+    id 'constructeer.mod-conventions'
+}
+
+dependencies {
+    modImplementation libs.trinkets
+	modImplementation libs.bundles.cca
+
+	implementation project(path: ":feature-core", configuration: "namedElements")
+}

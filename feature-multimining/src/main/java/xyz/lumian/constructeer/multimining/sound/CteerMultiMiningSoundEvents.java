@@ -21,36 +21,18 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.multimining.sound;
 
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.registry.CteerSoundEventRegistry;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerMultiMiningSoundEvents
+    implements IBootstrap
 {
     //******************************************************************************************************************
-    public static final SoundEvent TREE_FALLING = registerVariable("entity.falling_object.tree");
-    
-    //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //==================================================================================================================
-    private static SoundEvent registerVariable(final String name)
-    {
-        final Identifier id = CteerDefine.id(name);
-        return Registry.register(BuiltInRegistries.SOUND_EVENT, id, SoundEvent.createVariableRangeEvent(id));
-    }
-    
-    private static SoundEvent registerFixed(final String name, final float range)
-    {
-        final Identifier id = CteerDefine.id(name);
-        return Registry.register(BuiltInRegistries.SOUND_EVENT, id, SoundEvent.createFixedRangeEvent(id, range));
-    }
-    
-    //******************************************************************************************************************
-    private CteerMultiMiningSoundEvents() {}
+    public static final SoundEvent TREE_FALLING = CteerSoundEventRegistry
+        .registerVariable(CteerDefine.id("entity.falling_object.tree"));
 }

@@ -12,7 +12,6 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
-import xyz.lumian.constructeer.CteerDefine;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -47,31 +46,33 @@ public interface IDictionary
         }
         
         //**************************************************************************************************************
-        private final EnumMap<E, String> translations;
+        private final @Nullable EnumMap<E, String> translations;
         
         //**************************************************************************************************************
         public Provider(final FabricDataOutput output, final CompletableFuture<HolderLookup.Provider> lookup,
                         final String lang, final E[] values)
         {
             super(output, lang, lookup);
-            
-            if (values.length == 0)
-            {
-                throw new IllegalStateException("The given dictionary has no constants to generate");
-            }
-            
-            this.translations = new EnumMap<>(values[0].getDeclaringClass());
+            this.translations = ((values.length > 0) ? new EnumMap<>(values[0].getDeclaringClass()) : null);
         }
         
         //==============================================================================================================
-        public void set   (final E key, final String text)    { this.translations.put(key, text); }
+        @SuppressWarnings("DataFlowIssue")
+        public void set(final E key, final String text) { this.translations.put(key, text); }
+        
+        
+        @SuppressWarnings("DataFlowIssue")
         public void setAll(final Map<E, String> translations) { this.translations.putAll(translations); }
         
         //==============================================================================================================
         @Override
         public void generateTranslations(final HolderLookup.Provider lookup, final TranslationBuilder builder)
         {
-            this.translations.forEach((e, v) -> builder.add(e.getKey(), v));
+            if (this.translations != null)
+            {
+                this.translations.forEach((e, v) -> builder.add(e.getKey(), v));
+            }
+            
             this.generateAdditional(lookup, builder);
         }
         
@@ -96,7 +97,12 @@ public interface IDictionary
         return ((output, lookup) ->
         {
             final Provider<E> provider = customFactory.create(output, lookup);
-            translationBuilder.accept(provider.translations::put);
+            
+            if (provider.translations != null)
+            {
+                translationBuilder.accept(provider.translations::put);
+            }
+            
             return provider;
         });
     }

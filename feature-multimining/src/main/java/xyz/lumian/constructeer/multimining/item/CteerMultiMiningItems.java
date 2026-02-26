@@ -25,18 +25,19 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.*;
 import xyz.lumian.constructeer.CteerDefine;
 import xyz.lumian.constructeer.level.BlockContext;
 import xyz.lumian.constructeer.multimining.CteerMultiMiningDictionary;
-import xyz.lumian.constructeer.player.PlayerAttachments;
+import xyz.lumian.constructeer.player.CteerPlayerAttachments;
 import xyz.lumian.constructeer.multimining.item.component.CteerMultiMiningDataComponents;
 import xyz.lumian.constructeer.multimining.item.multimining.BuiltInMultiMining;
 import xyz.lumian.constructeer.multimining.item.multimining.IMultiMining;
+import xyz.lumian.constructeer.registry.BootstrapReport;
 import xyz.lumian.constructeer.registry.CteerItemRegistry;
+import xyz.lumian.constructeer.registry.IBootstrap;
 import xyz.lumian.constructeer.util.Freezable;
 import xyz.lumian.constructeer.util.FreezableMap;
 import xyz.lumian.constructeer.util.ItemFactory;
@@ -48,6 +49,7 @@ import java.util.function.Supplier;
 
 //**********************************************************************************************************************
 public final class CteerMultiMiningItems
+    implements IBootstrap
 {
     //******************************************************************************************************************
     public static final Map<ToolMaterial, Item> HAMMER_BY_MATERIAL;
@@ -152,40 +154,6 @@ public final class CteerMultiMiningItems
     }
     
     //******************************************************************************************************************
-    public static void initialise()
-    {
-        PlayerBlockBreakEvents.BEFORE.register(((level, player, pos, state, blockEntity) ->
-        {
-            final ItemStack    stack = player.getMainHandItem();
-            final IMultiMining mm    = stack.get(CteerMultiMiningDataComponents.MULTI_MINING);
-            
-            if (mm != null && !player.isCreative())
-            {
-                @SuppressWarnings("UnstableApiUsage")
-                final Direction look_dir = Objects
-                    .requireNonNull(player)
-                    .getAttached(PlayerAttachments.DESTROY_BLOCK_FACE);
-                
-                if (look_dir != null)
-                {
-                    final IMultiMining.Result result = mm.mine(look_dir, player, stack,
-                                                               new BlockContext(level, state, pos),
-                                                               IMultiMining.MiningFlag.DEFAULT_FLAGS);
-                    
-                    if (result == IMultiMining.Result.CAPPED)
-                    {
-                        player.displayClientMessage(CteerMultiMiningDictionary.MULTI_MINING_STRUCTURE_TOO_BIG, true);
-                    }
-                    
-                    return result.shouldBreakMined;
-                }
-            }
-            
-            return true;
-        }));
-    }
-    
-    //==================================================================================================================
     /// Utility function that allows adding custom hammer items.
     /// @param id           The [Identifier] of the item
     /// @param attackDamage The attack damage this item causes
@@ -282,5 +250,37 @@ public final class CteerMultiMiningItems
     }
     
     //******************************************************************************************************************
-    private CteerMultiMiningItems() {}
+    @Override
+    public void bootstrap(final BootstrapReport report)
+    {
+        PlayerBlockBreakEvents.BEFORE.register(((level, player, pos, state, blockEntity) ->
+        {
+            final ItemStack    stack = player.getMainHandItem();
+            final IMultiMining mm    = stack.get(CteerMultiMiningDataComponents.MULTI_MINING);
+            
+            if (mm != null && !player.isCreative())
+            {
+                @SuppressWarnings("UnstableApiUsage")
+                final Direction look_dir = Objects
+                    .requireNonNull(player)
+                    .getAttached(CteerPlayerAttachments.DESTROY_BLOCK_FACE);
+                
+                if (look_dir != null)
+                {
+                    final IMultiMining.Result result = mm.mine(look_dir, player, stack,
+                                                               new BlockContext(level, state, pos),
+                                                               IMultiMining.MiningFlag.DEFAULT_FLAGS);
+                    
+                    if (result == IMultiMining.Result.CAPPED)
+                    {
+                        player.displayClientMessage(CteerMultiMiningDictionary.MULTI_MINING_STRUCTURE_TOO_BIG, true);
+                    }
+                    
+                    return result.shouldBreakMined;
+                }
+            }
+            
+            return true;
+        }));
+    }
 }

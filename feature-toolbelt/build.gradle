@@ -1,10 +1,11 @@
 plugins {
-    id 'constructeer.mod-conventions'
+    id 'constructeer.fabric-conventions'
 }
 
 dependencies {
-    modImplementation libs.trinkets
-	modImplementation libs.bundles.cca
-
-	implementation project(path: ":feature-core", configuration: "namedElements")
+    modImplementation libs.bundles.trinkets
+    modImplementation libs.geckolib
+    include           libs.geckolib
 }
+
+addFeature project, features.core

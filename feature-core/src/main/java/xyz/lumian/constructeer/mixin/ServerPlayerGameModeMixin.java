@@ -32,7 +32,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xyz.lumian.constructeer.player.PlayerAttachments;
+import xyz.lumian.constructeer.player.CteerPlayerAttachments;
 
 
 
@@ -50,6 +50,6 @@ public class ServerPlayerGameModeMixin
                                              final Direction face, final int maxBuildHeight, final int sequence,
                                              final CallbackInfo ci)
     {
-        this.player.setAttached(PlayerAttachments.DESTROY_BLOCK_FACE, face);
+        this.player.setAttached(CteerPlayerAttachments.DESTROY_BLOCK_FACE, face);
     }
 }

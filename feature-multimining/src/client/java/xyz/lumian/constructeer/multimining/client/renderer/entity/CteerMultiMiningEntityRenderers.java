@@ -21,20 +21,21 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.multimining.client.renderer.entity;
 
-import net.minecraft.client.renderer.entity.EntityRenderers;
+import xyz.lumian.constructeer.client.registry.CteerEntityRenderRegistry;
 import xyz.lumian.constructeer.multimining.entity.CteerMultiMiningEntities;
+import xyz.lumian.constructeer.registry.BootstrapReport;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerMultiMiningEntityRenderers
+    implements IBootstrap
 {
     //******************************************************************************************************************
-    public static void initialise()
+    @Override
+    public void bootstrap(final BootstrapReport report)
     {
-        EntityRenderers.register(CteerMultiMiningEntities.FALLING_OBJECT, FallingObjectRenderer::new);
+        CteerEntityRenderRegistry.register(CteerMultiMiningEntities.FALLING_OBJECT, FallingObjectRenderer::new);
     }
-    
-    //******************************************************************************************************************
-    private CteerMultiMiningEntityRenderers() {}
 }

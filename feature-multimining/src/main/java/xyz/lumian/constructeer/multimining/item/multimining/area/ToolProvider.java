@@ -40,5 +40,5 @@ public record ToolProvider(ToolPredicate predicate)
         .map(ToolProvider::new, ToolProvider::predicate);
     
     //******************************************************************************************************************
-    @Override public AreaProviderType<? extends IAreaProvider> type() { return AreaProviderType.TOOL; }
+    @Override public IAreaProvider.Type<? extends IAreaProvider> type() { return CteerAreaProviderTypes.TOOL; }
 }

@@ -24,7 +24,6 @@ package xyz.lumian.constructeer.toolbelt.container;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
@@ -32,8 +31,10 @@ import net.minecraft.world.item.ItemStack;
 import org.joml.Vector2i;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.CteerDefine;
-import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItemTags;
+import xyz.lumian.constructeer.integration.accessory.AccessorySlot;
+import xyz.lumian.constructeer.integration.accessory.IAccessory;
 import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItems;
+import xyz.lumian.constructeer.toolbelt.registry.CteerToolbeltTags;
 import xyz.lumian.constructeer.toolbelt.item.PouchItem;
 import xyz.lumian.constructeer.toolbelt.item.ToolbeltItem;
 import xyz.lumian.constructeer.toolbelt.item.component.CteerToolbeltDataComponents;
@@ -64,7 +65,7 @@ public class ToolbeltMenu
         @Override public           int        getMaxStackSize() { return 1; }
         
         //==============================================================================================================
-        @Override public boolean mayPlace(final ItemStack stack) { return stack.is(CteerToolbeltItemTags.POUCHES); }
+        @Override public boolean mayPlace(final ItemStack stack) { return stack.is(CteerToolbeltTags.POUCHES); }
         
         //==============================================================================================================
         @Override
@@ -99,25 +100,25 @@ public class ToolbeltMenu
     //******************************************************************************************************************
     public static ToolbeltMenu client(final int id, final Inventory inventory)
     {
-        return new ToolbeltMenu(id, inventory, new ToolbeltEquipmentSlot(EquipmentSlot.MAINHAND),
+        return new ToolbeltMenu(id, inventory, AccessorySlot.of(IAccessory.SlotConstants.BELT),
                                 new SimpleContainer(ToolbeltItem.COUNT_POUCHES));
     }
     
-    public static ToolbeltMenu server(final ToolbeltEquipmentSlot slot, final int id, final Inventory inventory,
+    public static ToolbeltMenu server(final AccessorySlot slot, final int id, final Inventory inventory,
                                       final SimpleContainer container)
     {
         return new ToolbeltMenu(id, inventory, slot, container);
     }
     
     //******************************************************************************************************************
-    private final Player                player;
-    private final SimpleContainer       container;
-    private final ToolbeltEquipmentSlot equipmentSlot;
+    private final Player          player;
+    private final SimpleContainer container;
+    private final AccessorySlot   equipmentSlot;
     
     private boolean initialised;
     
     //******************************************************************************************************************
-    private ToolbeltMenu(final int id, final Inventory inventory, final ToolbeltEquipmentSlot slot,
+    private ToolbeltMenu(final int id, final Inventory inventory, final AccessorySlot slot,
                          final SimpleContainer container)
     {
         super(CteerToolbeltMenus.TOOLBELT, id);
@@ -275,13 +276,13 @@ public class ToolbeltMenu
     {
         final int reverse_id = (this.slots.size() - slotId);
         
-        if (reverse_id > 9 || this.equipmentSlot.isTrinketSlot())
+        if (reverse_id > 9 || this.equipmentSlot.isAccessorySlot())
         {
             super.clicked(slotId, button, clickType, player);
             return;
         }
         
-        final ItemStack toolbelt = player.getItemBySlot(this.equipmentSlot.asMcEquipmentSlot());
+        final ItemStack toolbelt = this.equipmentSlot.getEquipmentSlot().map(player::getItemBySlot).orElseThrow();
         
         // if our hotbar slot contains the toolbelt stack
         if (this.getSlot(slotId).getItem() != toolbelt)

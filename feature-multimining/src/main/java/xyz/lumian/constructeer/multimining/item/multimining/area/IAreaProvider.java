@@ -37,6 +37,8 @@ import xyz.lumian.constructeer.level.BlockContext;
 public interface IAreaProvider
 {
     //******************************************************************************************************************
+    record Type<T extends IAreaProvider>(MapCodec<T> codec, StreamCodec<RegistryFriendlyByteBuf, T> streamCodec) {}
+    
     @FunctionalInterface
     interface Output
     {
@@ -59,14 +61,14 @@ public interface IAreaProvider
     
     //******************************************************************************************************************
     Codec<IAreaProvider> CODEC = CteerMultiMiningRegistries.AREA_PROVIDER_TYPE.byNameCodec()
-        .dispatch(IAreaProvider::type, AreaProviderType::codec);
+        .dispatch(IAreaProvider::type, Type::codec);
     
     StreamCodec<RegistryFriendlyByteBuf, IAreaProvider> STREAM_CODEC = ByteBufCodecs
         .registry(CteerMultiMiningRegistries.AREA_PROVIDER_TYPE.key())
-        .dispatch(IAreaProvider::type, AreaProviderType::streamCodec);
+        .dispatch(IAreaProvider::type, Type::streamCodec);
     
     //******************************************************************************************************************
-    AreaProviderType<? extends IAreaProvider> type();
+    Type<? extends IAreaProvider> type();
     
     //==================================================================================================================
     /// Does the actual area calculation.

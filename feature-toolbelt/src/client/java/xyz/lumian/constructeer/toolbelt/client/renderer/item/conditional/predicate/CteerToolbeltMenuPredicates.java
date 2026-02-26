@@ -22,19 +22,20 @@
 package xyz.lumian.constructeer.toolbelt.client.renderer.item.conditional.predicate;
 
 import xyz.lumian.constructeer.CteerDefine;
-import xyz.lumian.constructeer.client.renderer.item.conditional.predicate.MenuPredicates;
+import xyz.lumian.constructeer.client.registry.CteerMenuPredicateRegistry;
+import xyz.lumian.constructeer.registry.BootstrapReport;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerToolbeltMenuPredicates
+    implements IBootstrap
 {
     //******************************************************************************************************************
-    public static void initialise()
+    @Override
+    public void bootstrap(final BootstrapReport report)
     {
-        MenuPredicates.register(CteerDefine.id("toolbelt/in_pouch_slot"), InPouchSlot.MAP_CODEC);
+        CteerMenuPredicateRegistry.register(CteerDefine.id("toolbelt/in_pouch_slot"), InPouchSlot.MAP_CODEC);
     }
-    
-    //******************************************************************************************************************
-    private CteerToolbeltMenuPredicates() {}
 }

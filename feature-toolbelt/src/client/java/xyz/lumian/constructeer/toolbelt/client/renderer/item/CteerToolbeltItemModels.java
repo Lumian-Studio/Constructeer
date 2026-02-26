@@ -21,22 +21,23 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.toolbelt.client.renderer.item;
 
-import net.minecraft.client.renderer.item.ItemModels;
 import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.client.registry.CteerItemModelRegistry;
+import xyz.lumian.constructeer.registry.BootstrapReport;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerToolbeltItemModels
+    implements IBootstrap
 {
     //******************************************************************************************************************
-    public static void initialise()
+    @Override
+    public void bootstrap(final BootstrapReport report)
     {
-        ItemModels.ID_MAPPER.put(
+        CteerItemModelRegistry.register(
             CteerDefine.id("pouch/contained_item"),
             PouchContainedItemSpecialRenderer.Unbaked.MAP_CODEC);
     }
-    
-    //******************************************************************************************************************
-    private CteerToolbeltItemModels() {}
 }

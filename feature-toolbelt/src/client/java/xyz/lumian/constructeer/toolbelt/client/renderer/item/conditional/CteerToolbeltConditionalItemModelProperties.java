@@ -21,20 +21,23 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.toolbelt.client.renderer.item.conditional;
 
-import net.minecraft.client.renderer.item.properties.conditional.ConditionalItemModelProperties;
 import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.client.registry.CteerConditionalItemModelPropertyRegistry;
+import xyz.lumian.constructeer.registry.BootstrapReport;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerToolbeltConditionalItemModelProperties
+    implements IBootstrap
 {
     //******************************************************************************************************************
-    public static void initialise()
+    @Override
+    public void bootstrap(final BootstrapReport report)
     {
-        ConditionalItemModelProperties.ID_MAPPER.put(CteerDefine.id("pouch/has_content"), PouchHasContent.MAP_CODEC);
+        CteerConditionalItemModelPropertyRegistry.register(
+            CteerDefine.id("pouch/has_content"),
+            PouchHasContent.MAP_CODEC);
     }
-    
-    //******************************************************************************************************************
-    private CteerToolbeltConditionalItemModelProperties() {}
 }

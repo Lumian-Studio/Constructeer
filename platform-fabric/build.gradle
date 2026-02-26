@@ -1,0 +1,30 @@
+plugins {
+    id 'constructeer.fabric-conventions'
+}
+
+static def addFeature(proj, lib)
+{
+    proj.dependencies {
+        implementation project(path: ":${lib.get().name}", configuration: 'namedElements')
+    }
+}
+
+configurations {
+    nestedJars {
+        transitive = false
+    }
+}
+
+dependencies {
+    modImplementation libs.bundles.trinkets
+
+    modImplementation libs.geckolib
+    include(libs.geckolib)
+
+    features.bundles.constructeer.get().name.each { module ->
+        api project(path: ":${module}", configuration: 'namedElements')
+        nestedJars project(":${module}")
+    }
+}
+
+loom.nestJars(tasks.named("jar"), configurations.nestedJars)

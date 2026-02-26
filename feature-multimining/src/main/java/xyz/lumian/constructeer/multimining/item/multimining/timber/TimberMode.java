@@ -48,7 +48,7 @@ public enum TimberMode
     /// as the actively mined block.
     FALLING_TREE("falling_tree", new FallingTreeTimberMode()),
     ;
-    
+
     //******************************************************************************************************************
     public static void initialise() {}
     

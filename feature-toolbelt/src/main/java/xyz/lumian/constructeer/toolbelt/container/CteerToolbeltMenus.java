@@ -21,34 +21,18 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.toolbelt.container;
 
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.flag.FeatureFlagSet;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.registry.CteerMenuTypeRegistry;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerToolbeltMenus
+    implements IBootstrap
 {
     //******************************************************************************************************************
-    public static final MenuType<ToolbeltMenu> TOOLBELT = CteerToolbeltMenus.register("toolbelt", ToolbeltMenu::client);
-    
-    //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //==================================================================================================================
-    public static <T extends AbstractContainerMenu> MenuType<T> register(final String                   name,
-                                                                         final MenuType.MenuSupplier<T> supplier)
-    {
-        final ResourceKey<MenuType<?>> key = ResourceKey.create(Registries.MENU, CteerDefine.id(name));
-        return Registry.register(BuiltInRegistries.MENU, key, new MenuType<>(supplier, FeatureFlagSet.of()));
-    }
-    
-    //******************************************************************************************************************
-    private CteerToolbeltMenus() {}
+    public static final MenuType<ToolbeltMenu> TOOLBELT = CteerMenuTypeRegistry
+        .register(CteerDefine.id("toolbelt"), ToolbeltMenu::client);
 }

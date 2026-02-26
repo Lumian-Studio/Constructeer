@@ -38,6 +38,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix3x2f;
@@ -46,12 +47,11 @@ import org.joml.Vector2i;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.integration.accessory.AccessorySlot;
 import xyz.lumian.constructeer.toolbelt.client.CteerToolbeltKeybinds;
 import xyz.lumian.constructeer.toolbelt.client.gui.screen.widget.ToolEntryWidget;
 import xyz.lumian.constructeer.toolbelt.client.player.CteerClientPlayerAttachments;
-import xyz.lumian.constructeer.toolbelt.container.ToolbeltEquipmentSlot;
 import xyz.lumian.constructeer.toolbelt.container.ToolbeltMenu;
-import xyz.lumian.constructeer.integration.trinkets.AbstractExtendedEquipmentSlot;
 import xyz.lumian.constructeer.toolbelt.item.component.CteerToolbeltDataComponents;
 import xyz.lumian.constructeer.toolbelt.item.component.ToolbeltStorage;
 import xyz.lumian.constructeer.toolbelt.network.serverbound.PlayC2SUpdateHeldTool;
@@ -132,23 +132,9 @@ public class ToolbeltWheelScreen
     public static final Identifier CURSOR_TEXTURE = CteerDefine.id("toolbelt/cursor");
     
     //------------------------------------------------------------------------------------------------------------------
-    private static final int           WHEEL_AREA_DIMENSIONS = 96;
-    private static final double        WHEEL_RADIUS          = (WHEEL_AREA_DIMENSIONS * 0.5f - 10);
-    private static final double        WHEEL_RADIUS_SQUARED  = (WHEEL_RADIUS * WHEEL_RADIUS);
-    private static final LookupValue[] LOOKUP_TABLE;
-    
-    //==================================================================================================================
-    static
-    {
-        LOOKUP_TABLE = IntStream
-            .range(0, 360)
-            .mapToObj(i ->
-            {
-                final double rad = Math.toRadians(i);
-                return new LookupValue(Math.sin(rad), Math.cos(rad));
-            })
-            .toArray(LookupValue[]::new);
-    }
+    private static final int    WHEEL_AREA_DIMENSIONS = 96;
+    private static final double WHEEL_RADIUS          = (WHEEL_AREA_DIMENSIONS * 0.5f - 10);
+    private static final double WHEEL_RADIUS_SQUARED  = (WHEEL_RADIUS * WHEEL_RADIUS);
     
     //******************************************************************************************************************
     private static boolean isPointOutsideCircle(final double relMouseX, final double relMouseY)
@@ -175,7 +161,7 @@ public class ToolbeltWheelScreen
     //******************************************************************************************************************
     private final List<ToolEntryWidget> toolEntries;
     private final ItemStack             toolbelt;
-    private final ToolbeltEquipmentSlot slot;
+    private final AccessorySlot         slot;
     
     private ScreenRectangle wheelBounds  = ScreenRectangle.empty();
     private boolean         isArrowMode  = false;
@@ -189,7 +175,7 @@ public class ToolbeltWheelScreen
     private double rotation;
     
     //******************************************************************************************************************
-    public ToolbeltWheelScreen(final ToolbeltEquipmentSlot slot, final ItemStack toolbelt)
+    public ToolbeltWheelScreen(final AccessorySlot slot, final ItemStack toolbelt)
     {
         super(CommonComponents.EMPTY);
         
@@ -224,11 +210,8 @@ public class ToolbeltWheelScreen
         
         if (ToolbeltWheelScreen.isPointOutsideCircle((mouseX - (cx - radius)), (mouseY - (cy - radius))))
         {
-            final int         deg  = (int) Math.round(Math.toDegrees(this.rotation));
-            final LookupValue lval = (ToolbeltWheelScreen.LOOKUP_TABLE[(deg + 360) % 360]);
-            
-            this.cursorX = (cx + radius * lval.sine);
-            this.cursorY = (cy + radius * lval.cosine);
+            this.cursorX = (cx + radius * Mth.sin(this.rotation));
+            this.cursorY = (cy + radius * Mth.cos(this.rotation));
             
             this.ignoreUpdate = true;
             GLFW.glfwSetCursorPos(

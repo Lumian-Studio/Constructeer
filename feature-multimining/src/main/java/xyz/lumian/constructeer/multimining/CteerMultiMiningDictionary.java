@@ -80,10 +80,10 @@ public enum CteerMultiMiningDictionary
         "Plow outline colour"),
     CONFIG_SCREEN_OPTION_SAW_SHOULD_RENDER(
         "config.screen.%s.option.shouldRenderSawOutline",
-        "Render plow tool outline"),
+        "Render saw tool outline"),
     CONFIG_SCREEN_OPTION_SAW_OUTLINE_COLOUR(
         "config.screen.%s.option.sawOutlineColour",
-        "Plow outline colour"),
+        "Saw outline colour"),
     
     CONFIG_SCREEN_OPTION_HAMMER_SHOULD_RENDER_TOOLTIP ("config.screen.%s.option.shouldRenderHammerOutline.tooltip"),
     CONFIG_SCREEN_OPTION_HAMMER_OUTLINE_COLOUR_TOOLTIP("config.screen.%s.option.hammerOutlineColour.tooltip"),

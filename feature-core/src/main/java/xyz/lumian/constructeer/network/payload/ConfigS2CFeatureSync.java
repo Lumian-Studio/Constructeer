@@ -30,7 +30,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.network.ConfigurationTask;
 import xyz.lumian.constructeer.CteerDefine;
-import xyz.lumian.constructeer.network.CteerNetwork;
+import xyz.lumian.constructeer.network.CteerNetworkRegistry;
 
 import java.util.function.Consumer;
 
@@ -67,5 +67,5 @@ public record ConfigS2CFeatureSync(String modVersion)
         ConfigS2CFeatureSync::new);
     
     //******************************************************************************************************************
-    @Override public Type<ConfigS2CFeatureSync> type() { return CteerNetwork.CONFIG_FEATURE_SYNC; }
+    @Override public Type<ConfigS2CFeatureSync> type() { return CteerNetworkRegistry.CONFIG_FEATURE_SYNC; }
 }

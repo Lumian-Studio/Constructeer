@@ -1,0 +1,50 @@
+{
+	"schemaVersion": 1,
+	"id": "constructeer-gauntlet",
+	"version": "${version}",
+	"name": "${name}",
+	"description": "Carry your chests, blocks AND ENEMIES!",
+	"authors": [ "LumiaLights" ],
+	"contact": {
+		"homepage": "https://modrinth.com/mod/constructeer",
+		"sources": "https://github.com/Lumian-Studio/constructeer"
+	},
+	"license": "MIT",
+	"icon": "assets/constructeer/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+            "xyz.lumian.constructeer.gauntlet.CteerGauntlet"
+        ],
+		"client": [
+            "xyz.lumian.constructeer.gauntlet.client.CteerGauntletClient"
+        ]
+	},
+	"mixins": [
+		{
+			"config": "constructeer-gauntlet.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader":       "${fabric_loader_version}",
+		"minecraft":          "${minecraft_version}",
+		"java":               ">=${java_version}",
+		"fabric-api":         "${fabric_api_version}",
+		"forgeconfigapiport": "${forge_config_api_port_version}",
+		"constructeer-core":  "${version}"
+	},
+	"custom": {
+		"modmenu": {
+			"links": {
+				"modmenu.modrinth": "https://modrinth.com/mod/constructeer"
+			},
+			"parent": {
+				"id":          "${mod_id}",
+				"name":        "${mod_name}",
+				"description": "${mod_desc}",
+				"icon":        "assets/constructeer/icon-parent.png"
+			}
+		}
+	}
+}

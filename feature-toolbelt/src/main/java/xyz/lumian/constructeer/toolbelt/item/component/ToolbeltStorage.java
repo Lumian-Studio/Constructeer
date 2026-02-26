@@ -36,7 +36,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipProvider;
 import xyz.lumian.constructeer.toolbelt.CteerToolbeltDictionary;
-import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItemTags;
+import xyz.lumian.constructeer.toolbelt.registry.CteerToolbeltTags;
 import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItems;
 import xyz.lumian.constructeer.toolbelt.item.ToolbeltItem;
 
@@ -152,7 +152,7 @@ public class ToolbeltStorage
     /// @throws IllegalArgumentException If the item stack was not representing a [CteerToolbeltItems#POUCH]
     public static ItemStack verify(final ItemStack stack)
     {
-        if (!stack.isEmpty() && !stack.is(CteerToolbeltItemTags.POUCHES))
+        if (!stack.isEmpty() && !stack.is(CteerToolbeltTags.POUCHES))
         {
             throw new IllegalArgumentException("item is not a pouch (got: " + stack + ")");
         }

@@ -44,20 +44,24 @@ package xyz.lumian.constructeer.toolbelt.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 import xyz.lumian.constructeer.CteerDefine;
+import xyz.lumian.constructeer.client.registry.CteerKeybindRegistry;
+import xyz.lumian.constructeer.integration.accessory.AccessorySlot;
+import xyz.lumian.constructeer.integration.accessory.IAccessory;
+import xyz.lumian.constructeer.registry.BootstrapReport;
+import xyz.lumian.constructeer.registry.IBootstrap;
 import xyz.lumian.constructeer.toolbelt.CteerToolbeltDictionary;
 import xyz.lumian.constructeer.toolbelt.client.player.CteerClientPlayerAttachments;
 import xyz.lumian.constructeer.toolbelt.client.gui.screen.ToolbeltWheelScreen;
-import xyz.lumian.constructeer.toolbelt.container.ToolbeltEquipmentSlot;
 import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItems;
 import xyz.lumian.constructeer.toolbelt.item.PouchItem;
 import xyz.lumian.constructeer.toolbelt.network.serverbound.PlayC2SOpenToolbeltConfig;
@@ -66,24 +70,25 @@ import xyz.lumian.constructeer.toolbelt.network.serverbound.PlayC2SOpenToolbeltC
 
 //**********************************************************************************************************************
 public final class CteerToolbeltKeybinds
+    implements IBootstrap
 {
     //******************************************************************************************************************
+    public static final KeyMapping.Category CONSTRUCTEER_CATEGORY;
+
     public static final KeyMapping OPEN_TOOLBELT_CONFIG;
     public static final KeyMapping SHOW_TOOLBELT_WHEEL;
-    
-    public static final KeyMapping.Category CONSTRUCTEER_CATEGORY;
     
     //==================================================================================================================
     static
     {
-        CONSTRUCTEER_CATEGORY = KeyMapping.Category.register(CteerDefine.id("keybinds"));
+        CONSTRUCTEER_CATEGORY = CteerKeybindRegistry.registerCategory(CteerDefine.id("keybinds"));
         
-        OPEN_TOOLBELT_CONFIG = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        OPEN_TOOLBELT_CONFIG = CteerKeybindRegistry.registerMapping(new KeyMapping(
             CteerToolbeltDictionary.KEYBIND_OPEN_TOOLBELT_CONFIG.getKey(),
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_X,
             CteerToolbeltKeybinds.CONSTRUCTEER_CATEGORY));
-        SHOW_TOOLBELT_WHEEL = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        SHOW_TOOLBELT_WHEEL  = CteerKeybindRegistry.registerMapping(new KeyMapping(
             CteerToolbeltDictionary.KEYBIND_SHOW_TOOLBELT_WHEEL.getKey(),
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_Z,
@@ -91,7 +96,8 @@ public final class CteerToolbeltKeybinds
     }
     
     //******************************************************************************************************************
-    public static void initialise()
+    @Override
+    public void bootstrap(final BootstrapReport report)
     {
         ClientTickEvents.END_CLIENT_TICK.register(client ->
         {
@@ -109,58 +115,50 @@ public final class CteerToolbeltKeybinds
                     return;
                 }
                 
-                final ToolbeltEquipmentSlot slot = ToolbeltEquipmentSlot.findToolbelt(player);
+                final var query = AccessorySlot
+                    .findEquipment(IAccessory.SlotConstants.BELT, player, CteerToolbeltItems.TOOLBELT);
                 
-                if (!slot.getEquipmentFromPlayer(client.player).is(CteerToolbeltItems.TOOLBELT))
+                if (query.isEmpty())
                 {
                     break;
                 }
                 
-                ClientPlayNetworking.send(new PlayC2SOpenToolbeltConfig(slot));
+                ClientPlayNetworking.send(new PlayC2SOpenToolbeltConfig(query.orElseThrow().slot()));
             }
             
-            //noinspection UnstableApiUsage
-            if (
-                CteerToolbeltKeybinds.SHOW_TOOLBELT_WHEEL.isDown()
-                && !player.hasAttached(CteerClientPlayerAttachments.WHEEL_SCREEN)
-            )
+            if (CteerToolbeltKeybinds.SHOW_TOOLBELT_WHEEL.isDown())
             {
-                if (!player.hasContainerOpen())
+                //noinspection UnstableApiUsage
+                if (!player.hasContainerOpen() && !player.hasAttached(CteerClientPlayerAttachments.WHEEL_SCREEN))
                 {
-                    final ToolbeltEquipmentSlot slot     = ToolbeltEquipmentSlot.findToolbelt(player);
-                    final ItemStack             toolbelt = slot.getEquipmentFromPlayer(client.player);
+                    final var query = AccessorySlot
+                        .findEquipment(IAccessory.SlotConstants.BELT, player, CteerToolbeltItems.TOOLBELT)
+                        .orElse(null);
                     
-                    if (toolbelt.is(CteerToolbeltItems.TOOLBELT))
+                    if (query == null)
+                    {
+                        final Component msg = CteerToolbeltDictionary.TOOLBELT_WHEEL_SCREEN_NO_TOOLBELT_FOUND.copy()
+                            .setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                        player.displayClientMessage(msg, true);
+                    }
+                    else
                     {
                         final ItemStack in_hand = player.getItemInHand(InteractionHand.MAIN_HAND);
                     
                         if (!PouchItem.isValidToolItem(in_hand) && !in_hand.isEmpty())
                         {
-                            player.displayClientMessage(
-                                CteerToolbeltDictionary.TOOLBELT_WHEEL_SCREEN_NOT_A_VALID_TOOL
-                                    .copy()
-                                    .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)),
-                                true);
+                            final Component msg = CteerToolbeltDictionary.TOOLBELT_WHEEL_SCREEN_NOT_A_VALID_TOOL.copy()
+                                .setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                            player.displayClientMessage(msg, true);
                         }
                         else
                         {
-                            client.setScreen(new ToolbeltWheelScreen(slot, toolbelt));
+                            client.setScreen(new ToolbeltWheelScreen(query.slot(), query.stack()));
                             CteerToolbeltKeybinds.SHOW_TOOLBELT_WHEEL.setDown(true);
                         }
-                    }
-                    else
-                    {
-                        player.displayClientMessage(
-                            CteerToolbeltDictionary.TOOLBELT_WHEEL_SCREEN_NO_TOOLBELT_FOUND
-                                .copy()
-                                .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)),
-                            true);
                     }
                 }
             }
         });
     }
-    
-    //******************************************************************************************************************
-    private CteerToolbeltKeybinds() {}
 }

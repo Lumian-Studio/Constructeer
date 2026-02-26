@@ -28,6 +28,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -39,8 +40,7 @@ import net.minecraft.world.item.crafting.display.RecipeDisplay;
 import net.minecraft.world.item.crafting.display.ShapedCraftingRecipeDisplay;
 import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.Level;
-import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItemTags;
-import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItems;
+import xyz.lumian.constructeer.toolbelt.registry.CteerToolbeltTags;
 import xyz.lumian.constructeer.toolbelt.item.component.CteerToolbeltDataComponents;
 import xyz.lumian.constructeer.toolbelt.item.component.ToolbeltStorage;
 import xyz.lumian.constructeer.util.FreezableObject;
@@ -70,6 +70,9 @@ public class ToolbeltWithPouchRecipe
                         .fieldOf("category")
                         .orElse(CraftingBookCategory.MISC)
                         .forGetter(ToolbeltWithPouchRecipe::category),
+                    BuiltInRegistries.ITEM.byNameCodec()
+                        .fieldOf("result")
+                        .forGetter(recipe -> recipe.result),
                     Codec.BOOL
                         .optionalFieldOf("show_notification", true)
                         .forGetter(recipe -> recipe.showNotification))
@@ -77,8 +80,11 @@ public class ToolbeltWithPouchRecipe
             STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT.map((i -> CraftingBookCategory.values()[i]), Enum::ordinal),
                     ToolbeltWithPouchRecipe::category,
-                ByteBufCodecs.BOOL, ToolbeltWithPouchRecipe::showNotification,
+                ByteBufCodecs.registry(Registries.ITEM), (recipe -> recipe.result),
+                ByteBufCodecs.BOOL,                      ToolbeltWithPouchRecipe::showNotification,
                 ToolbeltWithPouchRecipe::new);
+            
+            ToolbeltWithPouchRecipe.initialise();
         }
         
         //**************************************************************************************************************
@@ -100,7 +106,7 @@ public class ToolbeltWithPouchRecipe
         final Ingredient      leather_ingredient = Ingredient.of(Items.LEATHER);
         final HolderSet<Item> pouches            = BuiltInRegistries
             .acquireBootstrapRegistrationLookup(BuiltInRegistries.ITEM)
-            .getOrThrow(CteerToolbeltItemTags.POUCHES);
+            .getOrThrow(CteerToolbeltTags.POUCHES);
         
         INGREDIENTS = ImmutableList.<Ingredient>builder()
             .add(leather_ingredient, Ingredient.of(Items.IRON_INGOT), leather_ingredient)
@@ -110,20 +116,27 @@ public class ToolbeltWithPouchRecipe
     }
     
     //******************************************************************************************************************
-    public static void prepareHolders() {}
+    private static void initialise() {}
     
     //******************************************************************************************************************
     private final FreezableObject.Deferred<PlacementInfo> placementInfo = new FreezableObject.Deferred<>();
+    private final Item                                    result;
     private final boolean                                 showNotification;
     
     //******************************************************************************************************************
-    public ToolbeltWithPouchRecipe(final CraftingBookCategory category, final boolean showNotification)
+    public ToolbeltWithPouchRecipe(final CraftingBookCategory category, final Item result,
+                                   final boolean showNotification)
     {
         super(category);
+        
         this.showNotification = showNotification;
+        this.result           = result;
     }
     
-    public ToolbeltWithPouchRecipe(final CraftingBookCategory category) { this(category, true); }
+    public ToolbeltWithPouchRecipe(final CraftingBookCategory category, final Item result)
+    {
+        this(category, result, true);
+    }
     
     //==================================================================================================================
     @Override
@@ -149,7 +162,7 @@ public class ToolbeltWithPouchRecipe
         return List.of(new ShapedCraftingRecipeDisplay(
             3, 3,
             ToolbeltWithPouchRecipe.INGREDIENTS.stream().map(Ingredient::display).toList(),
-            new SlotDisplay.ItemSlotDisplay(CteerToolbeltItems.TOOLBELT),
+            new SlotDisplay.ItemSlotDisplay(this.result),
             new SlotDisplay.ItemSlotDisplay(Items.CRAFTING_TABLE)
         ));
     }
@@ -182,7 +195,7 @@ public class ToolbeltWithPouchRecipe
     public ItemStack assemble(final CraftingInput input, final HolderLookup.Provider provider)
     {
         final ItemStack pouch    = input.getItem(1, 1);
-        final ItemStack toolbelt = new ItemStack(CteerToolbeltItems.TOOLBELT);
+        final ItemStack toolbelt = new ItemStack(this.result);
         toolbelt.update(
             CteerToolbeltDataComponents.TOOLBELT_STORAGE,
             ToolbeltStorage.EMPTY,

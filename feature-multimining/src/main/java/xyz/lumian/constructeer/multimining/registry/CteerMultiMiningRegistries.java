@@ -21,37 +21,49 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.multimining.registry;
 
+import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
+import xyz.lumian.constructeer.CteerDefine;
 import xyz.lumian.constructeer.multimining.item.multimining.MultiMining;
 import xyz.lumian.constructeer.multimining.item.multimining.MultiMiningType;
-import xyz.lumian.constructeer.multimining.item.multimining.area.AreaProviderType;
+import xyz.lumian.constructeer.multimining.item.multimining.area.IAreaProvider;
 import xyz.lumian.constructeer.multimining.item.multimining.timber.IJustinTimbermode;
 import xyz.lumian.constructeer.registry.CteerRegistries;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerMultiMiningRegistries
+    implements IBootstrap
 {
     //******************************************************************************************************************
-    // Static registry keys
-    public static final Registry<AreaProviderType<?>> AREA_PROVIDER_TYPE
-        = CteerRegistries.registerOptional("area_provider_type", null);
+    // Static registries
+    /// See [IAreaProvider.Type].
+    public static final Registry<IAreaProvider.Type<?>> AREA_PROVIDER_TYPE;
     
-    public static final Registry<IJustinTimbermode> MULTI_MINING_TIMBER_MODE
-        = CteerRegistries.registerSynced("multi_mining_timber_mode", null);
+    /// See [IJustinTimbermode].
+    public static final Registry<IJustinTimbermode> MULTI_MINING_TIMBER_MODE;
     
-    public static final Registry<MultiMiningType<?>> MULTI_MINING_TYPE
-        = CteerRegistries.registerSynced("multi_mining_type", null);
+    /// See [MultiMiningType].
+    public static final Registry<MultiMiningType<?>> MULTI_MINING_TYPE;
     
-    // Dynamic registry keys
-    public static final ResourceKey<Registry<MultiMining>> MULTI_MINING_PROVIDER
-        = CteerRegistries.registerDynamicSynced("multi_mining_provider", MultiMining.MAP_CODEC.codec());
+    // Dynamic registries
+    /// See [MultiMining].
+    public static final ResourceKey<Registry<MultiMining>> MULTI_MINING_PROVIDER;
     
-    //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //******************************************************************************************************************
-    private CteerMultiMiningRegistries() {}
+    //==================================================================================================================
+    static
+    {
+        AREA_PROVIDER_TYPE       = CteerRegistries
+            .registerRegistry(CteerDefine.id("area_provider_type"), null, RegistryAttribute.OPTIONAL);
+        MULTI_MINING_TIMBER_MODE = CteerRegistries
+            .registerRegistry(CteerDefine.id("multi_mining_timber_mode"), null, RegistryAttribute.SYNCED);
+        MULTI_MINING_TYPE        = CteerRegistries
+            .registerRegistry(CteerDefine.id("multi_mining_type"), null, RegistryAttribute.SYNCED);
+        MULTI_MINING_PROVIDER    = CteerRegistries.registerDynamicSyncedRegistry(
+            CteerDefine.id("multi_mining_provider"),
+            MultiMining.MAP_CODEC.codec());
+    }
 }

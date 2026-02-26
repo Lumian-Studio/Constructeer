@@ -17,10 +17,7 @@ public abstract class ReloadableConfig<Self extends ReloadableConfig<Self>>
     private final Set<BiConsumer<Self, HolderLookup.Provider>> listeners = new HashSet<>();
     
     //******************************************************************************************************************
-    public void addListener(final BiConsumer<Self, HolderLookup.Provider> listener)
-    {
-        this.listeners.add(listener);
-    }
+    public void addListener(final BiConsumer<Self, HolderLookup.Provider> listener) { this.listeners.add(listener); }
     
     public void addListener(final Consumer<Self> listener)
     {

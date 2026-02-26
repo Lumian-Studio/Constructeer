@@ -37,6 +37,7 @@ import xyz.lumian.constructeer.registry.RegistryId;
 import xyz.lumian.constructeer.toolbelt.config.CteerToolbeltServerConfig;
 import xyz.lumian.constructeer.toolbelt.item.component.CteerToolbeltDataComponents;
 import xyz.lumian.constructeer.toolbelt.item.component.PouchContent;
+import xyz.lumian.constructeer.toolbelt.registry.CteerToolbeltTags;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -117,7 +118,7 @@ public class PouchItem
             .content();
         final ItemStack other   = slot.getItem();
      
-        if (other.is(CteerToolbeltItemTags.POUCHES))
+        if (other.is(CteerToolbeltTags.POUCHES))
         {
             return false;
         }
@@ -170,7 +171,7 @@ public class PouchItem
 	public boolean overrideOtherStackedOnMe(final ItemStack me, final ItemStack other, final Slot slot,
                                             final ClickAction action, final Player player, final SlotAccess slotAccess)
     {
-        if (other.is(CteerToolbeltItemTags.POUCHES))
+        if (other.is(CteerToolbeltTags.POUCHES))
         {
             return false;
         }

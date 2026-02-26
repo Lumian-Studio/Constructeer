@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import xyz.lumian.constructeer.player.PlayerAttachments;
+import xyz.lumian.constructeer.player.CteerPlayerAttachments;
 
 import java.util.Objects;
 
@@ -51,6 +51,6 @@ public class MultiPlayerGameModeMixin
     {
         Objects
             .requireNonNull(Minecraft.getInstance().player)
-            .setAttached(PlayerAttachments.DESTROY_BLOCK_FACE, direction);
+            .setAttached(CteerPlayerAttachments.DESTROY_BLOCK_FACE, direction);
     }
 }

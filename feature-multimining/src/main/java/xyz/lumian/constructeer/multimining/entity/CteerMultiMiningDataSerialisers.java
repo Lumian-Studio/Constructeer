@@ -21,34 +21,21 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.multimining.entity;
 
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricTrackedDataRegistry;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import xyz.lumian.constructeer.CteerDefine;
 import xyz.lumian.constructeer.multimining.item.multimining.MultiMiningBox;
+import xyz.lumian.constructeer.registry.CteerEntityDataSerialiserRegistry;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerMultiMiningDataSerialisers
+    implements IBootstrap
 {
     //******************************************************************************************************************
     public static final EntityDataSerializer<MultiMiningBox> FALLING_OBJECT_RENDER_BOX
-        = register("falling_object_render_box", MultiMiningBox.STREAM_RENDER_CODEC);
-    
-    //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //==================================================================================================================
-    private static <T> EntityDataSerializer<T> register(final String                                          name,
-                                                        final StreamCodec<? super RegistryFriendlyByteBuf, T> codec)
-    {
-        final EntityDataSerializer<T> serialiser = EntityDataSerializer.forValueType(codec);
-        FabricTrackedDataRegistry.register(CteerDefine.id(name), serialiser);
-        return serialiser;
-    }
-    
-    //******************************************************************************************************************
-    private CteerMultiMiningDataSerialisers() {}
+        = CteerEntityDataSerialiserRegistry.register(
+            CteerDefine.id("falling_object_render_box"),
+            MultiMiningBox.STREAM_RENDER_CODEC);
 }

@@ -22,25 +22,21 @@
 package xyz.lumian.constructeer.toolbelt.network;
 
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import xyz.lumian.constructeer.registry.IBootstrap;
 import xyz.lumian.constructeer.toolbelt.network.serverbound.PlayC2SOpenToolbeltConfig;
 import xyz.lumian.constructeer.toolbelt.network.serverbound.PlayC2SUpdateHeldTool;
-import xyz.lumian.constructeer.network.CteerNetwork;
+import xyz.lumian.constructeer.network.CteerNetworkRegistry;
 
 
 
 //**********************************************************************************************************************
 public final class CteerToolbeltPayloads
+    implements IBootstrap
 {
     //******************************************************************************************************************
     // Play client -> server
-    public static final CustomPacketPayload.Type<PlayC2SOpenToolbeltConfig> OPEN_TOOLBELT_SCREEN = CteerNetwork
+    public static final CustomPacketPayload.Type<PlayC2SOpenToolbeltConfig> OPEN_TOOLBELT_SCREEN = CteerNetworkRegistry
         .registerPlayC2S(PlayC2SOpenToolbeltConfig.ID, PlayC2SOpenToolbeltConfig.CODEC);
-    public static final CustomPacketPayload.Type<PlayC2SUpdateHeldTool> UPDATE_HELD_TOOL = CteerNetwork
+    public static final CustomPacketPayload.Type<PlayC2SUpdateHeldTool> UPDATE_HELD_TOOL = CteerNetworkRegistry
         .registerPlayC2S(PlayC2SUpdateHeldTool.ID, PlayC2SUpdateHeldTool.CODEC);
-    
-    //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //******************************************************************************************************************
-    private CteerToolbeltPayloads() {}
 }

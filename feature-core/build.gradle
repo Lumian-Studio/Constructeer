@@ -1,9 +1,5 @@
 plugins {
-    id 'constructeer.mod-conventions'
-}
-
-repositories {
-
+    id 'constructeer.fabric-conventions'
 }
 
 fabricApi {
@@ -13,15 +9,16 @@ fabricApi {
 }
 
 dependencies {
-    modImplementation libs.trinkets
-    modImplementation libs.bundles.cca
+    modImplementation libs.bundles.trinkets
+    modImplementation libs.geckolib
+    include(libs.geckolib)
 }
 
 buildConfig {
     forClass(project.mod_package, "CteerAutoDefine") {
         buildConfigField String.class, 'ID',         project.mod_id
         buildConfigField String.class, 'NAME',       project.mod_name
-        buildConfigField String.class, 'VERSION',    libs.versions.constructeer.get()
+        buildConfigField String.class, 'VERSION',    features.versions.constructeer.get()
         buildConfigField String.class, 'MC_VERSION', libs.versions.minecraft.get()
         buildConfigField String.class, 'PACKAGE',    project.mod_package
     }

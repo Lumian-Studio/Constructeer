@@ -1,5 +1,8 @@
 package xyz.lumian.constructeer.util;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
+
 import java.io.Closeable;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -7,18 +10,20 @@ import java.util.function.Function;
 
 
 //**********************************************************************************************************************
+@NullUnmarked
 public abstract class Freezable<Self extends Freezable<Self>>
 {
     //******************************************************************************************************************
-    public record Scoped<T extends Freezable<T>>(T object)
+    public record Scoped<T extends Freezable<T>>(@NonNull T object)
         implements Closeable
     {
         //**************************************************************************************************************
-        @Override public void close() { this.object.freeze(); }
+        @Override
+        public void close() { this.object.freeze(); }
     }
     
     //******************************************************************************************************************
-    public static <T extends Freezable<T>> Scoped<T> using(final T object)
+    public static <T extends Freezable<T>> Scoped<T> using(final @NonNull T object)
     {
         return new Scoped<>(object);
     }
@@ -30,7 +35,7 @@ public abstract class Freezable<Self extends Freezable<Self>>
     public boolean isFrozen() { return this.frozen; }
     
     //==================================================================================================================
-    public void ifFrozen(final Consumer<Self> consumer)
+    public void ifFrozen(final @NonNull Consumer<Self> consumer)
     {
         if (this.frozen)
         {
@@ -39,7 +44,7 @@ public abstract class Freezable<Self extends Freezable<Self>>
         }
     }
     
-    public void ifMutable(final Consumer<Self> consumer)
+    public void ifMutable(final @NonNull Consumer<Self> consumer)
     {
         if (!this.frozen)
         {
@@ -48,17 +53,14 @@ public abstract class Freezable<Self extends Freezable<Self>>
         }
     }
     
-    public <T> T map(final Function<Self, T> ifMutable, final Function<Self, T> ifFrozen)
+    public <T> T map(final @NonNull Function<Self, T> ifMutable, final Function<Self, T> ifFrozen)
     {
         //noinspection unchecked
         return (this.frozen ? ifFrozen : ifMutable).apply((Self) this);
     }
     
     //==================================================================================================================
-    public void freeze()
-    {
-        this.frozen = true;
-    }
+    public void freeze() { this.frozen = true; }
     
     //==================================================================================================================
     protected void assertFrozen()

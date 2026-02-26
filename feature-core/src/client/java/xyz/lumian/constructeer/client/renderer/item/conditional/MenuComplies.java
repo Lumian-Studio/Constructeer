@@ -36,7 +36,7 @@ import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.client.mixin.AbstractContainerMenuAccessor;
 import xyz.lumian.constructeer.client.renderer.item.conditional.predicate.AlwaysTrue;
 import xyz.lumian.constructeer.client.renderer.item.conditional.predicate.MenuPredicate;
-import xyz.lumian.constructeer.client.renderer.item.conditional.predicate.MenuPredicates;
+import xyz.lumian.constructeer.client.registry.CteerMenuPredicateRegistry;
 
 import java.util.Optional;
 
@@ -52,7 +52,7 @@ public record MenuComplies<T extends MenuPredicate>(Optional<MenuType<?>> menuTy
             BuiltInRegistries.MENU.byNameCodec()
                 .optionalFieldOf("menuTypes")
                 .forGetter(MenuComplies::menuType),
-            MenuPredicates.MAP_CODEC
+            CteerMenuPredicateRegistry.MAP_CODEC
                 .forGetter(MenuComplies::predicate))
         .apply(instance, MenuComplies::new));
     

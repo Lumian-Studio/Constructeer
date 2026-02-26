@@ -25,7 +25,9 @@ import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.minecraft.core.HolderLookup;
-import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItemTags;
+import xyz.lumian.constructeer.integration.accessory.IAccessory;
+import xyz.lumian.constructeer.registry.CteerTagRegistry;
+import xyz.lumian.constructeer.toolbelt.registry.CteerToolbeltTags;
 import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItems;
 
 import java.util.concurrent.CompletableFuture;
@@ -52,9 +54,13 @@ public abstract class CteerToolbeltTagProvider
         @Override
         protected void addTags(final HolderLookup.Provider lookup)
         {
-            this.valueLookupBuilder(CteerToolbeltItemTags.POUCHES)
+            this.valueLookupBuilder(CteerToolbeltTags.POUCHES)
                 .add(CteerToolbeltItems.POUCH)
                 .addAll(CteerToolbeltItems.POUCH_BY_DYE.values());
+            
+            // Trinkets
+            this.valueLookupBuilder(CteerTagRegistry.accessory(IAccessory.SlotConstants.BELT))
+                .add(CteerToolbeltItems.TOOLBELT);
         }
     }
 }

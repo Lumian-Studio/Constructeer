@@ -23,10 +23,13 @@ package xyz.lumian.constructeer.util;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -35,6 +38,7 @@ import java.util.function.Function;
 
 
 //**********************************************************************************************************************
+@NullUnmarked
 public class FreezableMap<K, V>
     extends Freezable<FreezableMap<K, V>>
     implements Map<K, V>
@@ -43,7 +47,10 @@ public class FreezableMap<K, V>
     private final Map<K, V> underlyingMap;
     
     //******************************************************************************************************************
-    public FreezableMap(final Map<K, V> underlyingMap) { this.underlyingMap = underlyingMap; }
+    public FreezableMap(final @NonNull Map<K, V> underlyingMap)
+    {
+        this.underlyingMap = Objects.requireNonNull(underlyingMap);
+    }
     
     //==================================================================================================================
     @Override public V get(final Object key) { return this.underlyingMap.get(key); }
@@ -143,14 +150,14 @@ public class FreezableMap<K, V>
     }
     
     @Override
-    public V compute(final K key, final BiFunction<? super K, ? super V, ? extends V> remappingFunction)
+    public V compute(final K key, final @NonNull BiFunction<? super K, ? super V, ? extends V> remappingFunction)
     {
         this.assertFrozen();
         return this.underlyingMap.compute(key, remappingFunction);
     }
     
     @Override
-    public V computeIfAbsent(final K key, final Function<? super K, ? extends V> mappingFunction)
+    public V computeIfAbsent(final K key, final @NonNull Function<? super K, ? extends V> mappingFunction)
     {
         this.assertFrozen();
         return this.underlyingMap.computeIfAbsent(key, mappingFunction);
@@ -158,14 +165,14 @@ public class FreezableMap<K, V>
     
     @Override
     public @Nullable V computeIfPresent(final K key,
-                                        final BiFunction<? super K, ? super V, ? extends V> remappingFunction)
+                                        final @NonNull BiFunction<? super K, ? super V, ? extends V> remappingFunction)
     {
         this.assertFrozen();
         return this.underlyingMap.computeIfPresent(key, remappingFunction);
     }
     
     @Override
-    public void putAll(final Map<? extends K, ? extends V> m)
+    public void putAll(final @NonNull Map<? extends K, ? extends V> m)
     {
         this.assertFrozen();
         this.underlyingMap.putAll(m);
@@ -196,8 +203,8 @@ public class FreezableMap<K, V>
     @Override
     public boolean equals(final Object obj)
     {
-        if (obj == this) { return true; }
-        if (!(obj instanceof FreezableMap<?, ?> other)) { return false; }
+        if (obj == this)                                return true;
+        if (!(obj instanceof FreezableMap<?, ?> other)) return false;
         return this.underlyingMap.equals(other.underlyingMap);
     }
 }

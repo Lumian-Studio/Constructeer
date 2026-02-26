@@ -30,10 +30,14 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jspecify.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animatable.manager.AnimatableManager;
+import software.bernie.geckolib.util.GeckoLibUtil;
 import xyz.lumian.constructeer.CteerDefine;
-import xyz.lumian.constructeer.toolbelt.container.ToolbeltEquipmentSlot;
+import xyz.lumian.constructeer.integration.accessory.AccessorySlot;
+import xyz.lumian.constructeer.integration.accessory.IAccessory;
 import xyz.lumian.constructeer.toolbelt.container.ToolbeltMenu;
-import xyz.lumian.constructeer.integration.trinkets.AbstractExtendedEquipmentSlot;
 import xyz.lumian.constructeer.toolbelt.item.component.CteerToolbeltDataComponents;
 import xyz.lumian.constructeer.toolbelt.item.component.ToolbeltStorage;
 
@@ -42,9 +46,10 @@ import xyz.lumian.constructeer.toolbelt.item.component.ToolbeltStorage;
 //**********************************************************************************************************************
 public class ToolbeltItem
     extends Item
+    implements GeoItem
 {
     //******************************************************************************************************************
-    public record MenuProvider(ToolbeltEquipmentSlot slot, ItemStack stack)
+    public record MenuProvider(AccessorySlot slot, ItemStack stack)
         implements net.minecraft.world.MenuProvider
     {
         //**************************************************************************************************************
@@ -72,10 +77,17 @@ public class ToolbeltItem
     }
     
     //******************************************************************************************************************
-    public static final int COUNT_POUCHES = 9;
+    public static final int COUNT_POUCHES  = 9;
+    public static final int COUNT_UPGRADES = (COUNT_POUCHES - 1);
+    
+    //******************************************************************************************************************
+    private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
     
     //******************************************************************************************************************
     public ToolbeltItem(final Properties properties) { super(properties); }
+    
+    //==================================================================================================================
+    @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return this.geoCache; }
     
     //==================================================================================================================
     @Override
@@ -94,10 +106,13 @@ public class ToolbeltItem
         if (!level.isClientSide())
         {
             player.openMenu(new MenuProvider(
-                new ToolbeltEquipmentSlot(hand.asEquipmentSlot()),
+                AccessorySlot.ofVanilla(IAccessory.SlotConstants.BELT, hand.asEquipmentSlot()),
                 player.getItemInHand(hand)));
         }
         
         return InteractionResult.SUCCESS;
     }
+    
+    //==================================================================================================================
+    @Override public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {}
 }

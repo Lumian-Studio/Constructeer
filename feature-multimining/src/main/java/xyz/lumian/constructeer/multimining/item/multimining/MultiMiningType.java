@@ -33,9 +33,6 @@ public record MultiMiningType<T extends IMultiMining>(
         = register(CteerDefine.id("custom"), MultiMining.MAP_CODEC, MultiMining.STREAM_CODEC);
     
     //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //==================================================================================================================
     public static <T extends IMultiMining> MultiMiningType<T> register(
         final Identifier                              id,
         final MapCodec<T>                             codec,

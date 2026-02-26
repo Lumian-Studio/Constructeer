@@ -21,8 +21,8 @@
 /// SOFTWARE.
 package xyz.lumian.constructeer.toolbelt.client.renderer.state;
 
+import com.google.common.base.Supplier;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
-import net.minecraft.world.item.ItemStack;
 
 
 
@@ -30,11 +30,13 @@ import net.minecraft.world.item.ItemStack;
 public final class CteerToolbeltRenderDataKeys
 {
     //******************************************************************************************************************
-    public static final RenderStateDataKey<Double>    LIVING_FALL_DISTANCE        = RenderStateDataKey
-        .create(() -> "living_fall_distance");
-    public static final RenderStateDataKey<ItemStack> HUMANOID_TOOLBELT_EQUIPMENT = RenderStateDataKey
-        .create(() -> "humanoid_toolbelt_equipment");
+    public static final RenderStateDataKey<Double>  LIVING_FALL_DISTANCE = create(() -> "living_fall_distance");
+    public static final RenderStateDataKey<Boolean> HAS_ACCESSORY        = create(() -> "has_toolbelt_accessory");
     
     //******************************************************************************************************************
-    private CteerToolbeltRenderDataKeys() {}
+    private static  <T> RenderStateDataKey<T> create(final Supplier<String> key)
+    {
+        return RenderStateDataKey.create(key);
+    }
+    
 }

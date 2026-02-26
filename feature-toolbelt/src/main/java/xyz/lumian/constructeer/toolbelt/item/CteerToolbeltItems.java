@@ -30,6 +30,7 @@ import net.minecraft.world.item.equipment.Equippable;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.CteerDefine;
 import xyz.lumian.constructeer.registry.CteerItemRegistry;
+import xyz.lumian.constructeer.registry.IBootstrap;
 import xyz.lumian.constructeer.toolbelt.item.component.CteerToolbeltDataComponents;
 import xyz.lumian.constructeer.toolbelt.item.component.PouchContent;
 import xyz.lumian.constructeer.toolbelt.item.component.ToolbeltStorage;
@@ -44,6 +45,7 @@ import java.util.Map;
 
 //**********************************************************************************************************************
 public final class CteerToolbeltItems
+    implements IBootstrap
 {
     //******************************************************************************************************************
     /// The pseudo registry for all the mod's registered items, including block items.
@@ -75,20 +77,12 @@ public final class CteerToolbeltItems
     {
         try (var ignored = CteerItemRegistry.usingTab(CteerItemRegistry.MAIN_TAB_KEY))
         {
-            TOOLBELT = CteerItemRegistry.register("toolbelt", ToolbeltItem::new, (new Item.Properties())
-                .stacksTo(1)
-                .component(DataComponents.EQUIPPABLE, Equippable
-                    .builder(EquipmentSlot.LEGS)
-                    .setEquipSound(ArmorMaterials.LEATHER.equipSound())
-                    .setAsset(CteerToolbeltEquipmentAssets.TOOLBELT)
-                    .setEquipOnInteract(false)
-                    .build())
-                .component(CteerToolbeltDataComponents.TOOLBELT_STORAGE, ToolbeltStorage.EMPTY));
+            TOOLBELT = CteerToolbeltItems.createToolbeltItem(CteerDefine.id("toolbelt"), ToolbeltItem::new);
             
             try (var map = Freezable.using(new FreezableMap<DyeColor, Item>(new EnumMap<>(DyeColor.class))))
             {
                 POUCH_BY_DYE = map.object();
-            
+                
                 POUCH            = modPouchItem(null);
                 WHITE_POUCH      = modPouchItem(DyeColor.WHITE);
                 ORANGE_POUCH     = modPouchItem(DyeColor.ORANGE);
@@ -111,9 +105,22 @@ public final class CteerToolbeltItems
     }
     
     //******************************************************************************************************************
-    public static void initialise() {}
+    /// Utility function that allows adding custom toolbelt items and registering them.
+    /// @param id      The [Identifier] of the item
+    /// @param factory The [ToolbeltItem] item generator function
+    /// @return The newly created pouch item
+    public static <T extends ToolbeltItem> T createToolbeltItem(final Identifier id, final ItemFactory<T> factory)
+    {
+        return CteerItemRegistry.register(id, factory, (new Item.Properties())
+            .stacksTo(1)
+            .component(DataComponents.EQUIPPABLE, Equippable
+                .builder(EquipmentSlot.LEGS)
+                .setEquipSound(ArmorMaterials.LEATHER.equipSound())
+                .setEquipOnInteract(false)
+                .build())
+            .component(CteerToolbeltDataComponents.TOOLBELT_STORAGE, ToolbeltStorage.EMPTY));
+    }
     
-    //==================================================================================================================
     /// Utility function that allows adding custom pouch items and registering them.
     /// @param id      The [Identifier] of the item
     /// @param factory The [PouchItem] generator function
@@ -121,7 +128,6 @@ public final class CteerToolbeltItems
     /// @throws IllegalStateException If an item with the given tool material was already registered.
     public static <T extends PouchItem> T createPouchItem(final Identifier id, final ItemFactory<T> factory)
     {
-        
         return CteerItemRegistry.register(id, factory, (new Item.Properties())
             .stacksTo(1)
             .component(CteerToolbeltDataComponents.POUCH_CONTENT, PouchContent.EMPTY));
@@ -140,7 +146,4 @@ public final class CteerToolbeltItems
         
         return item;
     }
-    
-    //******************************************************************************************************************
-    private CteerToolbeltItems() {}
 }

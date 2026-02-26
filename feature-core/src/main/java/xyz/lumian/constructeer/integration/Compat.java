@@ -25,7 +25,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import org.intellij.lang.annotations.Language;
 import org.jspecify.annotations.Nullable;
 import xyz.lumian.constructeer.CteerDefine;
-import xyz.lumian.constructeer.integration.trinkets.ITrinkets;
+import xyz.lumian.constructeer.integration.accessory.IAccessory;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -39,19 +39,16 @@ public final class Compat
     //******************************************************************************************************************
     private static final Set<String> LOADED = new HashSet<>();
     
-    private static @Nullable ITrinkets TRINKETS;
-    
-    //******************************************************************************************************************
-    public static void initialise()
-    {
-        // trinkets integration
-        TRINKETS = Compat
-            .loadIntegrationClass("trinkets", "xyz.lumian.constructeer.integration.Trinkets", ITrinkets.class)
-            .orElse(null);
-    }
+    private static final @Nullable IAccessory ACCESSORY;
     
     //==================================================================================================================
-    public static Optional<ITrinkets> getTrinkets() { return Optional.ofNullable(Compat.TRINKETS); }
+    static
+    {
+        ACCESSORY = Compat.loadAccessoryIntegration();
+    }
+    
+    //******************************************************************************************************************
+    public static Optional<IAccessory> getAccessory() { return Optional.ofNullable(Compat.ACCESSORY); }
     
     //==================================================================================================================
     public static void loadStaticIntegration(
@@ -142,6 +139,14 @@ public final class Compat
         return Compat.loadIntegrationClass(requiredModId, className, integrationClass, loader);
     }
     
-    //******************************************************************************************************************
-    private Compat() {}
+    //==================================================================================================================
+    private static @Nullable IAccessory loadAccessoryIntegration()
+    {
+        return Compat
+            .loadIntegrationClass(
+                CteerDefine.Integrations.ACCESSORY,
+                ("xyz.lumian.constructeer.integration.accessory.Accessory_" + CteerDefine.Integrations.ACCESSORY),
+                IAccessory.class)
+            .orElse(null);
+    }
 }

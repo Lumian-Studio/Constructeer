@@ -24,13 +24,11 @@ package xyz.lumian.constructeer.toolbelt.client.mixin;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.lumian.constructeer.toolbelt.client.renderer.state.CteerToolbeltRenderDataKeys;
-import xyz.lumian.constructeer.toolbelt.item.CteerToolbeltItems;
 
 
 
@@ -45,11 +43,5 @@ public abstract class HumanoidMobRendererMixin
     public void extractRenderState(final Mob mob, final HumanoidRenderState state, final float f, final CallbackInfo ci)
     {
         state.setData(CteerToolbeltRenderDataKeys.LIVING_FALL_DISTANCE, mob.fallDistance);
-        final ItemStack equipment = state.legsEquipment;
-        
-        if (equipment.is(CteerToolbeltItems.TOOLBELT))
-        {
-            state.setData(CteerToolbeltRenderDataKeys.HUMANOID_TOOLBELT_EQUIPMENT, equipment);
-        }
     }
 }

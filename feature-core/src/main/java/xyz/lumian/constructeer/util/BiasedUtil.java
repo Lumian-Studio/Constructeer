@@ -18,8 +18,8 @@ import java.util.function.Supplier;
 public class BiasedUtil
 {
     //******************************************************************************************************************
-    public static boolean isClient() { return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT; }
-    public static boolean isServer() { return FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER; }
+    public static boolean isClient() { return (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT); }
+    public static boolean isServer() { return (FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER); }
     
     //==================================================================================================================
     public static <T1, T2> T2 map(final T1 obj, final Function<T1, T2> ifClient, final Function<T1, T2> ifServer)
@@ -48,11 +48,31 @@ public class BiasedUtil
     }
     
     public static <T> T load(
+        
         @Language("jvm-class-name")
-        final String   clientClass,
+        final String clientClass,
+        
         final Class<T> mutualClass,
         final Object   ...args
     )
+    {
+        return BiasedUtil.instantiateClass(clientClass, mutualClass, args, false);
+    }
+    
+    public static <T> T loadProtected(
+        
+        @Language("jvm-class-name")
+        final String clientClass,
+        
+        final Class<T> mutualClass,
+        final Object   ...args
+    )
+    {
+        return BiasedUtil.instantiateClass(clientClass, mutualClass, args, true);
+    }
+    
+    private static <T> T instantiateClass(final String clientClass, final Class<T> mutualClass, final Object[] args,
+                                          final boolean isProtected)
     {
         final Class<?>[] arg_types = Arrays.stream(args)
             .map(Object::getClass)
@@ -64,7 +84,7 @@ public class BiasedUtil
                 try
                 {
                     final Class<?> manager_class = Class.forName(clientClass, true, mutualClass.getClassLoader());
-                    return manager_class.getConstructor(arg_types);
+                    return manager_class.getDeclaredConstructor(arg_types);
                 }
                 catch (final Exception ex) { throw new RuntimeException(ex); }
             }),
@@ -76,6 +96,11 @@ public class BiasedUtil
         
         try
         {
+            if (isProtected)
+            {
+                ctor.setAccessible(true);
+            }
+            
             return mutualClass.cast(ctor.newInstance(args));
         }
         catch (final Exception ex)

@@ -22,27 +22,19 @@
 package xyz.lumian.constructeer.multimining.item.component;
 
 import net.minecraft.core.component.DataComponentType;
+import xyz.lumian.constructeer.CteerDefine;
 import xyz.lumian.constructeer.multimining.item.multimining.IMultiMining;
 import xyz.lumian.constructeer.registry.CteerDataComponentRegistry;
+import xyz.lumian.constructeer.registry.IBootstrap;
 
 
 
 //**********************************************************************************************************************
 public final class CteerMultiMiningDataComponents
+    implements IBootstrap
 {
     //******************************************************************************************************************
     public static final DataComponentType<IMultiMining> MULTI_MINING = CteerDataComponentRegistry.register(
-        "multi_mining",
-        DataComponentType
-            .<IMultiMining>builder()
-            .persistent(IMultiMining.CODEC)
-            .networkSynchronized(IMultiMining.STREAM_CODEC)
-            .cacheEncoding()
-            .build());
-    
-    //******************************************************************************************************************
-    public static void initialise() {}
-    
-    //******************************************************************************************************************
-    private CteerMultiMiningDataComponents() {}
+        CteerDefine.id("multi_mining"),
+        (b -> b.persistent(IMultiMining.CODEC).networkSynchronized(IMultiMining.STREAM_CODEC).cacheEncoding()));
 }

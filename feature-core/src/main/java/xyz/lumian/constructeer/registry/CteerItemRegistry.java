@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -20,6 +19,7 @@ import xyz.lumian.constructeer.util.FreezableMap;
 import xyz.lumian.constructeer.util.ItemFactory;
 
 import java.io.Closeable;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 //**********************************************************************************************************************
 public final class CteerItemRegistry
+    implements IBootstrap
 {
     //******************************************************************************************************************
     public record ScopedTab(ResourceKey<CreativeModeTab> tabKey)
@@ -53,6 +54,9 @@ public final class CteerItemRegistry
         private @Nullable Set<Item>                    activeSet;
         
         //**************************************************************************************************************
+        public @Nullable ResourceKey<CreativeModeTab> getCurrentTab() { return this.currentTab; }
+        
+        //==============================================================================================================
         public Stream<Map.Entry<ResourceKey<CreativeModeTab>, Set<Item>>> stream()
         {
             return this.items.entrySet().stream();
@@ -83,7 +87,7 @@ public final class CteerItemRegistry
     //******************************************************************************************************************
     /// Contains all items that were registered with any of this class' register methods and which namespaces start with
     /// "constructeer".
-    public static Map<Identifier, Item> BY_ID = new FreezableMap<>(new Object2ObjectOpenHashMap<>());
+    public static FreezableMap<Identifier, Item> BY_ID = new FreezableMap<>(new Object2ObjectOpenHashMap<>());
     
     //==================================================================================================================
     public static final ResourceKey<CreativeModeTab> MAIN_TAB_KEY = createTabKey("main");
@@ -98,20 +102,6 @@ public final class CteerItemRegistry
     public static final Item TROPHY = register("trophy", Item::new, (new Item.Properties()).stacksTo(1));
     
     //******************************************************************************************************************
-    public static void initialise()
-    {
-        CteerRegistryEvents.MC_REGISTRIES_FROZEN_AFTER.register(() ->
-        {
-            CteerItemRegistry.TAB_MANAGER.stream().forEach(e -> ItemGroupEvents.modifyEntriesEvent(e.getKey())
-                .register(entries -> e.getValue().forEach(entries::accept)));
-            
-            //noinspection DataFlowIssue
-            CteerItemRegistry.TAB_MANAGER = null;
-            ((FreezableMap<Identifier, Item>) BY_ID).freeze();
-        });
-    }
-    
-    //==================================================================================================================
     public static ScopedTab usingTab(final ResourceKey<CreativeModeTab> tabKey) { return new ScopedTab(tabKey); }
     
     //==================================================================================================================
@@ -130,7 +120,24 @@ public final class CteerItemRegistry
         }
         
         CteerItemRegistry.TAB_MANAGER.register(item);
-        return Registry.register(BuiltInRegistries.ITEM, key, item);
+        return CteerRegistries.register(BuiltInRegistries.ITEM, key, item);
+    }
+    
+    public static <T extends Item> T registerWithTab(final ResourceKey<Item>                      key,
+                                                     final ItemFactory<T>                         factory,
+                                                     final Item.Properties                        initProperties,
+                                                     final @Nullable ResourceKey<CreativeModeTab> tabKey)
+    {
+        final T item;
+        {
+            final ResourceKey<CreativeModeTab> prev_tab = CteerItemRegistry.TAB_MANAGER.getCurrentTab();
+            
+            CteerItemRegistry.TAB_MANAGER.setCurrentTab(Objects.requireNonNull(tabKey));
+            item = CteerItemRegistry.register(key, factory, initProperties);
+            CteerItemRegistry.TAB_MANAGER.setCurrentTab(prev_tab);
+        }
+        
+        return item;
     }
     
     public static <T extends Item> T register(final Identifier      id,
@@ -140,11 +147,28 @@ public final class CteerItemRegistry
         return CteerItemRegistry.register(ResourceKey.create(Registries.ITEM, id), factory, initProperties);
     }
     
+    public static <T extends Item> T registerWithTab(final Identifier                   id,
+                                                     final ItemFactory<T>               factory,
+                                                     final Item.Properties              initProperties,
+                                                     final ResourceKey<CreativeModeTab> tabKey)
+    {
+        return CteerItemRegistry.registerWithTab(ResourceKey.create(Registries.ITEM, id), factory, initProperties,
+                                                 tabKey);
+    }
+    
     public static <T extends Item> T register(final String          name,
                                               final ItemFactory<T>  factory,
                                               final Item.Properties initProperties)
     {
         return CteerItemRegistry.register(CteerDefine.id(name), factory, initProperties);
+    }
+    
+    public static <T extends Item> T registerWithTab(final String                       name,
+                                                     final ItemFactory<T>               factory,
+                                                     final Item.Properties              initProperties,
+                                                     final ResourceKey<CreativeModeTab> tabKey)
+    {
+        return CteerItemRegistry.registerWithTab(CteerDefine.id(name), factory, initProperties, tabKey);
     }
     
     //==================================================================================================================
@@ -155,19 +179,40 @@ public final class CteerItemRegistry
     
     public static CreativeModeTab registerTab(final ResourceKey<CreativeModeTab> key, final CreativeModeTab tab)
     {
-        return Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, key, tab);
+        return CteerRegistries.register(BuiltInRegistries.CREATIVE_MODE_TAB, key, tab);
     }
     
     public static CreativeModeTab registerTab(final ResourceKey<CreativeModeTab> key,
                                               final Component                    title,
                                               final Supplier<ItemStack>          icon)
     {
-        return Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, key, FabricItemGroup.builder()
+        return CteerRegistries.register(BuiltInRegistries.CREATIVE_MODE_TAB, key, FabricItemGroup.builder()
             .title(title)
             .icon(icon)
             .build());
     }
     
     //******************************************************************************************************************
-    private CteerItemRegistry() {}
+    @Override
+    public void freeze(final BootstrapReport report)
+    {
+        CteerItemRegistry.BY_ID.freeze();
+        CteerItemRegistry.TAB_MANAGER.stream().forEach(e ->
+        {
+            final Set<Item> items = e.getValue();
+            
+            if (!items.isEmpty())
+            {
+                ItemGroupEvents.modifyEntriesEvent(e.getKey())
+                    .register(entries -> e.getValue().forEach(entries::accept));
+                report.report(() -> "registered %s items for creative tab '%s': %s"
+                    .formatted(items.size(), e.getKey().identifier(), Arrays.toString(items.stream()
+                        .map(BuiltInRegistries.ITEM::getKey)
+                        .toArray(Identifier[]::new))));
+            }
+        });
+        
+        //noinspection DataFlowIssue
+        CteerItemRegistry.TAB_MANAGER = null;
+    }
 }
