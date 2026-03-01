@@ -1,5 +1,1 @@
-plugins {
-    id 'constructeer.fabric-conventions'
-}
-
 addFeature project, features.core

@@ -1,15 +1,8 @@
-plugins {
-    id 'constructeer.fabric-conventions'
-}
-
 addFeature project, features.core
+addClassTransformer project, "gauntlet"
 
 dependencies {
-    modImplementation libs.bundles.trinkets
-    modImplementation libs.geckolib
-    include(libs.geckolib)
-}
-
-loom {
-    accessWidenerPath = file("src/main/resources/constructeer-gauntlet.classtweaker")
+    modImplementation platform.bundles.accessory
+    modImplementation platform.geckolib
+    nestedJar         project, platform.geckolib
 }

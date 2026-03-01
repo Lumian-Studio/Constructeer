@@ -1,0 +1,144 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.gradle.userdev'
+    id 'com.github.gmazzo.buildconfig'
+}
+
+group = project.mod_package
+
+def module_id   = project.mod_id
+def module_name = project.mod_name
+
+if (project.hasProperty('module_id'))
+{
+    if (!project.hasProperty('module_name'))
+    {
+        throw new InvalidUserCodeException("gradle name is not defined for project '${rootProject.name}'")
+    }
+
+    module_id   += "-${project.module_id}"
+    module_name += " ${project.module_name}"
+
+    version = features[project.module_id].get().version
+}
+else
+{
+    version = features.versions.constructeer.get()
+}
+
+base { archivesName = "${module_id}" }
+
+repositories {
+    maven {
+        name = 'ParchmentMC'
+        url  = 'https://maven.parchmentmc.org'
+    }
+
+    maven { url = "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
+
+    maven { url "https://maven.shedaniel.me/" }
+
+    maven {
+        name = "Fuzs Mod Resources"
+        url  = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+    }
+
+    maven {
+        name = "Illusive Soulworks maven"
+        url = "https://maven.theillusivec4.top/"
+    }
+
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'GeckoLib'
+                url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+            }
+        }
+        filter { includeGroupAndSubgroups('software.bernie.geckolib') }
+    }
+}
+
+configurations {
+    modImplementation {
+        extendsFrom implementation
+    }
+    modApi {
+        extendsFrom api
+    }
+    modRuntimeOnly {
+        extendsFrom runtimeOnly
+    }
+}
+
+dependencies {
+    modImplementation platform.neoforge
+
+    if (project.devauth.toBoolean())
+    {
+        modRuntimeOnly platform.devauth
+    }
+
+    if (project.is_source.toBoolean())
+    {
+        annotationProcessor libs.manifold.pp
+    }
+
+    modImplementation platform.clothconfig
+    modImplementation platform.forgeconfig
+}
+
+final def java_version = libs.versions.java.get().toInteger()
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+
+jar {
+    inputs.property "archivesName", project.base.archivesName
+    from(rootProject.file("LICENSE.md"))
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = java_version
+    it.options.compilerArgs << '-Xplugin:Manifold'
+    it.options.compilerArgs << '-ANEOFORGE'
+    it.options.compilerArgs << '-AFORGE_LIKE'
+
+    final def mc_ver = libs.versions.minecraft.get().replace('.', '_')
+    it.options.compilerArgs << ('-AMC' + mc_ver)
+}
+
+if (!project.is_source.toBoolean())
+{
+    return
+}
+
+sourceSets {
+    main {
+        java {}
+    }
+    client {
+        java {}
+    }
+}
+
+runs {
+    configureEach {
+        systemProperty 'forge.logging.markers',       'REGISTRIES'
+        systemProperty 'forge.logging.console.level', 'debug'
+
+        modSource project.sourceSets.main
+        modSource project.sourceSets.client
+    }
+}
+
+if (project.build_define.toBoolean())
+{
+    buildConfig {
+        final def pkg = (project.group + '.' + project.module_id);
+
+        forClass(pkg, "ModuleDefine") {
+            buildConfigField String.class, 'ID',      project.module_id
+            buildConfigField String.class, 'NAME',    project.module_name
+            buildConfigField String.class, 'PACKAGE', pkg
+        }
+    }
+}

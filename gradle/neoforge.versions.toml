@@ -1,0 +1,25 @@
+[versions]
+# Base Configuration
+neoforge    = '21.11.38-beta'
+forgeconfig = '21.11.1'
+clothconfig = '21.11.153'
+devauth     = '1.2.2'
+
+# Module Configurations
+curios   = '14.0.0+1.21.11:api'
+geckolib = '5.4.3'
+
+
+
+[libraries]
+neoforge    = { module = 'net.neoforged:neoforge',                                        version.ref = 'neoforge'    }
+forgeconfig = { module = 'fuzs.forgeconfigapiport:forgeconfigapiport-common-neoforgeapi', version.ref = 'forgeconfig' }
+clothconfig = { module = 'me.shedaniel.cloth:cloth-config-neoforge',                      version.ref = 'clothconfig' }
+curios      = { module = 'top.theillusivec4.curios:curios-neoforge',                      version.ref = 'curios'      }
+geckolib    = { module = 'software.bernie.geckolib:geckolib-neoforge-1.21.11',            version.ref = 'geckolib'    }
+devauth     = { module = 'me.djtheredstoner:DevAuth-neoforge',                            version.ref = 'devauth'     }
+
+
+
+[bundles]
+accessory = [ 'curios' ]

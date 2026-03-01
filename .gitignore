@@ -29,12 +29,13 @@ bin/
 *.DS_Store
 
 # fabric
-
 run/
 generated/
 
-# java
+# neoforge
+runs/
 
+# java
 hs_err_*.log
 replay_*.log
 *.hprof

@@ -68,7 +68,7 @@ public interface IAccessory
     enum SlotConstants
         implements SlotReference
     {
-    #if FABRIC
+    #if FABRIC_LIKE
         // Trinkets
         HEAD    ("head/hat",       EquipmentSlot.HEAD),
         BACK    ("chest/back",     EquipmentSlot.BODY),
@@ -77,7 +77,7 @@ public interface IAccessory
         BELT    ("legs/belt",      EquipmentSlot.LEGS),
         HAND    ("hand/glove",     EquipmentSlot.MAINHAND),
         RING    ("hand/ring",      EquipmentSlot.MAINHAND),
-    #elif NEOFORGE || FORGE
+    #elif FORGE_LIKE
         // Curios API
         HEAD    ("head",     EquipmentSlot.HEAD),
         BACK    ("back",     EquipmentSlot.BODY),

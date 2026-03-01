@@ -86,7 +86,7 @@ dependencies {
 
     if (project.devauth.toBoolean())
     {
-        modRuntimeOnly libs.devauth
+        modRuntimeOnly platform.devauth
     }
 
     if (project.is_source.toBoolean())
@@ -94,14 +94,13 @@ dependencies {
         annotationProcessor libs.manifold.pp
     }
 
-    modImplementation libs.fabric.loader
-    modImplementation libs.fabric.api
-    modImplementation libs.modmenu
-    modImplementation(libs.clothconfig) {
+    modImplementation platform.fabric.loader
+    modImplementation platform.fabric.api
+    modImplementation platform.modmenu
+    modImplementation platform.forgeconfig
+    modImplementation(platform.clothconfig) {
 		exclude(group: "net.fabricmc.fabric-api")
 	}
-
-    modApi libs.forgeconfig
 }
 
 tasks.withType(GenerateModuleMetadata).configureEach {
@@ -114,6 +113,7 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.release = java_version
     it.options.compilerArgs << '-Xplugin:Manifold'
     it.options.compilerArgs << '-AFABRIC'
+    it.options.compilerArgs << '-AFABRIC_LIKE'
 
     final def mc_ver = libs.versions.minecraft.get().replace('.', '_')
     it.options.compilerArgs << ('-AMC' + mc_ver)
@@ -137,8 +137,8 @@ processResources {
     inputs.property "name",                          module_name
     inputs.property "minecraft_version",             libs.minecraft.get().version
     inputs.property "java_version",                  java_version
-    inputs.property "fabric_loader_version",         ">=${libs.fabric.loader.get().version}"
-    inputs.property "forge_config_api_port_version", "~${libs.forgeconfig.get().version}"
+    inputs.property "fabric_loader_version",         ">=${platform.fabric.loader.get().version}"
+    inputs.property "forge_config_api_port_version", "~${platform.forgeconfig.get().version}"
     inputs.property "fabric_api_version",            "*"
 
     inputs.property "mod_id",   project.mod_id

@@ -8,6 +8,8 @@ repositories {
         url = 'https://maven.fabricmc.net/'
     }
 
+    maven { url = 'https://maven.neoforged.net/releases' }
+
     mavenCentral()
     gradlePluginPortal()
 }
@@ -21,4 +23,5 @@ static def getPlugin(provider)
 dependencies {
     implementation(getPlugin(libs.plugins.loom))
     implementation(getPlugin(libs.plugins.buildconfig))
+    implementation(getPlugin(libs.plugins.neoforged))
 }

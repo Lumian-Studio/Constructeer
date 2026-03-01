@@ -1,0 +1,41 @@
+pluginManagement {
+    repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+
+        maven { url = 'https://maven.neoforged.net/releases' }
+
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    versionCatalogs {
+        create('libs') {
+            from(files('../gradle/libs.versions.toml'))
+        }
+        create('features') {
+            from(files('../gradle/feature.versions.toml'))
+        }
+        create('platform') {
+            from(files('../gradle/fabric.versions.toml'))
+        }
+    }
+}
+
+final def feature_modules = [
+	'core',
+	'gauntlet',
+	'multimining',
+	'toolbelt'
+]
+
+rootProject.name = 'Constructeer Fabric'
+feature_modules.forEach { module ->
+    final def module_name = "../feature-${module}"
+    include module_name
+    project(":${module_name}").name = "constructeer-${module}"
+}

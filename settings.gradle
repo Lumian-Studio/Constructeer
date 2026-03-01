@@ -1,36 +1,10 @@
-pluginManagement {
-	repositories {
-		maven {
-			name = 'Fabric'
-			url = 'https://maven.fabricmc.net/'
-		}
-		mavenCentral()
-		gradlePluginPortal()
-	}
-}
-
-dependencyResolutionManagement {
-	versionCatalogs {
-		create('features') {
-			from(files('gradle/features.versions.toml'))
-		}
-	}
-}
-
-def feature_modules = [
-	'core',
-	'multimining',
-	'toolbelt',
-	'gauntlet'
+final def platforms = [
+	'fabric',
+	'neoforge'
 ]
 
-rootProject.name = "constructeer"
-
+// Our conventions
 includeBuild('build-logic')
-include('platform-fabric')
 
-feature_modules.each { name ->
-	final def project_name = "feature-${name}"
-	include(project_name)
-	project(":${project_name}").name = "${rootProject.name}-${name}"
-}
+// For each platform, we build an extra project hierarchy
+platforms.forEach { plat -> includeBuild("platform-${plat}") }

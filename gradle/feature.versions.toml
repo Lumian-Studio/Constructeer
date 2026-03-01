@@ -1,0 +1,17 @@
+[versions]
+constructeer = '1.0.0'
+
+# Modules
+core        = '1.0.0'
+multimining = '1.0.0'
+toolbelt    = '1.0.0'
+gauntlet    = '1.0.0'
+
+[libraries]
+core        = { module = 'xyz.lumian.constructeer:constructeer-core',        version.ref = 'core'        }
+multimining = { module = 'xyz.lumian.constructeer:constructeer-multimining', version.ref = 'multimining' }
+toolbelt    = { module = 'xyz.lumian.constructeer:constructeer-toolbelt',    version.ref = 'toolbelt'    }
+gauntlet    = { module = 'xyz.lumian.constructeer:constructeer-gauntlet',    version.ref = 'gauntlet'    }
+
+[bundles]
+constructeer = [ 'core', 'multimining', 'toolbelt', 'gauntlet' ]

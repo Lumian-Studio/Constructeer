@@ -1,17 +1,7 @@
-plugins {
-    id 'constructeer.fabric-conventions'
-}
-
-fabricApi {
-    configureDataGeneration {
-        client = true
-    }
-}
-
 dependencies {
-    modImplementation libs.bundles.trinkets
-    modImplementation libs.geckolib
-    include(libs.geckolib)
+    modImplementation platform.bundles.accessory
+    modImplementation platform.geckolib
+    nestedJar         project, platform.geckolib
 }
 
 buildConfig {
@@ -21,5 +11,13 @@ buildConfig {
         buildConfigField String.class, 'VERSION',    features.versions.constructeer.get()
         buildConfigField String.class, 'MC_VERSION', libs.versions.minecraft.get()
         buildConfigField String.class, 'PACKAGE',    project.mod_package
+    }
+}
+
+pluginManager.withPlugin(libs.plugins.loom.get().pluginId) {
+    fabricApi {
+        configureDataGeneration {
+            client = true
+        }
     }
 }

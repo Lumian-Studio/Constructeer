@@ -9,6 +9,22 @@ static def addFeature(proj, lib)
     }
 }
 
+static def addClassTransformer(proj, String name)
+{
+    proj.loom.accessWidenerPath = proj.file("src/main/resources/${name}.classtweaker")
+}
+
+static def nestedJar(proj, lib)
+{
+    proj.dependencies {
+        include lib
+    }
+}
+
+subprojects {
+    apply plugin: 'constructeer.fabric-conventions'
+}
+
 configurations {
     nestedJars {
         transitive = false
@@ -16,10 +32,10 @@ configurations {
 }
 
 dependencies {
-    modImplementation libs.bundles.trinkets
+    modImplementation platform.bundles.accessory
 
-    modImplementation libs.geckolib
-    include(libs.geckolib)
+    modImplementation platform.geckolib
+    include(platform.geckolib)
 
     features.bundles.constructeer.get().name.each { module ->
         api project(path: ":${module}", configuration: 'namedElements')
